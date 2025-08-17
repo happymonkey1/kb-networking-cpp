@@ -40,12 +40,13 @@ fn main() {
     println!("cargo:rerun-if-changed=../../../CMakePresets.json");
 
     let bindings = bindgen::Builder::default()
-        .header("../../../include/kb/kb_networking.h")
+        .header("kb_networking_wrapper.h")
+        .clang_arg("-I../../../include")
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
         .generate()
         .expect("Unable to generate bindings");
 
     bindings
-        .write_to_file(out_dir.join("bindings.rs"))
+        .write_to_file(PathBuf::from(env::var("OUT_DIR").expect("out dir is set").to_string()).join("bindings.rs"))
         .expect("Couldn't write bindings!");
 }

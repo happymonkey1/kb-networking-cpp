@@ -11,6 +11,9 @@
 extern "C" {
 #endif
 
+KB_API void kb_networking_init();
+KB_API void kb_networking_shutdown();
+
 #ifdef __cplusplus
 }
 #endif

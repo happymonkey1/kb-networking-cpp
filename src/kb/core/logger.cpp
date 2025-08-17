@@ -1,4 +1,4 @@
-#include "logger.hpp"
+#include "../../../include/kb/core/logger.hpp"
 
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>

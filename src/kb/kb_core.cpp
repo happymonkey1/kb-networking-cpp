@@ -3,9 +3,10 @@
 //
 
 #include "kb/kb_core.h"
-#include <cstdarg>
 #include "kb/core/logger.hpp"
 #include "kb/types.h"
+
+#include <cstdarg>
 
 KB_API void kb_abort(const char *p_file, int p_line, const char* p_fmt, ...) {
   if (const auto logger = kb::core::Logger::get_core_logger(); logger) {

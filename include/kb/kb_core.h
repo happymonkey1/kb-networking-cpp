@@ -13,7 +13,7 @@
 #      define KB_API __declspec(dllimport)
 #    endif
 #  else
-#    define KB_API __attribute ((visibility ("default")))
+#    define KB_API __attribute__ ((visibility("default")))
 #  endif
 #else
 #  define KB_API
