@@ -1,9 +1,13 @@
-#ifndef KB_CORE_LOGGER_H
-#define KB_CORE_LOGGER_H
+//
+// Created by happymonkey1 on 8/16/25.
+//
+
+#ifndef KB_NETWORKING_CPP_KB_LOG_H
+#define KB_NETWORKING_CPP_KB_LOG_H
 
 #include <spdlog/spdlog.h>
 
-namespace kb {
+namespace kb::core {
 
 class Logger {
 public:
@@ -14,4 +18,4 @@ public:
 
 }
 
-#endif
+#endif  //KB_NETWORKING_CPP_KB_LOG_H

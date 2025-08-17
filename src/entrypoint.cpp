@@ -1,10 +1,10 @@
+#include "kb/kb_networking_cpp.hpp"
+#include "kb/core/logger.hpp"
 
-
-#include "kb/core/logger.h"
 auto main() -> int {
-  kb::Logger::init();
+  kb::core::Logger::init();
 
-  kb::Logger::get_core_logger()->info("Hello world!");
+  KB_LOG_INFO("Hello world!");
 
-  kb::Logger::shutdown();
+  kb::core::Logger::shutdown();
 }

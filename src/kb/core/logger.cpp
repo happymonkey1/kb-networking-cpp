@@ -1,11 +1,11 @@
-#include "logger.h"
+#include "logger.hpp"
 
-#include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 
-namespace kb {
+namespace kb::core {
 
-static std::shared_ptr<spdlog::logger> s_core_logger;
+static std::shared_ptr<spdlog::logger> s_core_logger = nullptr;
 
 auto Logger::init() noexcept -> void {
   std::vector<spdlog::sink_ptr> sinks;
@@ -21,7 +21,6 @@ auto Logger::init() noexcept -> void {
   spdlog::register_logger(s_core_logger);
   s_core_logger->flush_on(spdlog::level::info);
 }
-
 
 auto Logger::get_core_logger() noexcept -> std::shared_ptr<spdlog::logger> {
   return s_core_logger;

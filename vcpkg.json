@@ -1,7 +1,8 @@
 {
   "dependencies": [
+    "fmt",
     "gamenetworkingsockets",
     "spdlog",
-    "fmt"
+    "msgpack"
   ]
 }
