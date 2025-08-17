@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD 20)
 find_package(GameNetworkingSockets CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(msgpack-cxx REQUIRED)
+find_package(fmt REQUIRED)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -50,6 +51,7 @@ target_compile_features   (kb-networking PRIVATE cxx_std_20)
 target_link_libraries(kb-networking PRIVATE GameNetworkingSockets::shared)
 target_link_libraries(kb-networking PRIVATE spdlog::spdlog_header_only)
 target_link_libraries(kb-networking PRIVATE msgpack-cxx)
+target_link_libraries(kb-networking PRIVATE fmt::fmt)
 
 add_executable(kb-networking-cli src/entrypoint.cpp)
 

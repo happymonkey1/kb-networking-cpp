@@ -22,9 +22,7 @@ KB_API void kb_abort(const char *p_file, int p_line, const char* p_fmt, ...) {
   std::abort();
 }
 
-#ifndef __cplusplus
-
-void kb_log_internal_str(const kb_log_level p_level, const char *p_msg) {
+KB_API void kb_log_internal_str(const kb_log_level p_level, const char *p_msg) {
   const auto logger = kb::core::Logger::get_core_logger();
   if (!logger) {
     return;
@@ -49,11 +47,11 @@ void kb_vlog_internal(const kb_log_level p_level, const char *p_fmt, va_list p_a
   va_list args_copy;
   va_copy(args_copy, p_args);
   char msg_buffer[128];
-  kb::i32 len = vsnprintf(msg_buffer, sizeof(msg_buffer), p_fmt, args_copy);
+  const kb::i32 len = vsnprintf(msg_buffer, sizeof(msg_buffer), p_fmt, args_copy);
   if (len < 128) {
     kb_log_internal_str(p_level, msg_buffer);
   } else {
-    i8 *msg_buffer_2 = (i8 *)calloc(len + 1, sizeof(char));
+    auto *msg_buffer_2 = (char *)calloc(len + 1, sizeof(char));
     vsnprintf(msg_buffer_2, len + 1, p_fmt, p_args);
     msg_buffer_2[len] = 0;
     kb_log_internal_str(p_level, msg_buffer_2);
@@ -63,9 +61,7 @@ void kb_vlog_internal(const kb_log_level p_level, const char *p_fmt, va_list p_a
 
 KB_API void kb_log_internal(const kb_log_level p_level, const char *p_fmt, ...) {
   std::va_list args;
-  va_start(args, p_format);
+  va_start(args, p_fmt);
   kb_vlog_internal(p_level, p_fmt, args);
   va_end(args);
 }
-
-#endif

@@ -37,7 +37,6 @@ extern "C" {
 
 KB_API void kb_abort(const char *p_file, int p_line, const char *p_fmt, ...);
 
-#ifdef __cplusplus
 #  ifndef KB_LOG_TRACE
 #    define KB_LOG_TRACE(...) ::kb::core::Logger::get_core_logger()->trace(__VA_ARGS__)
 #  endif
@@ -61,7 +60,6 @@ KB_API void kb_abort(const char *p_file, int p_line, const char *p_fmt, ...);
 #  ifndef KB_LOG_CRITICAL
 #    define KB_LOG_CRITICAL(...) ::kb::core::Logger::get_core_logger()->critical(__VA_ARGS__)
 #  endif
-#else
 
 typedef enum kb_log_level {
   KB_LOG_LEVEL_NONE     = 0,
@@ -73,33 +71,8 @@ typedef enum kb_log_level {
   KB_LOG_LEVEL_CRITICAL = 6,
 } kb_log_level;
 
+KB_API void kb_log_internal_str(kb_log_level p_level, const char *p_msg);
 KB_API void kb_log_internal(kb_log_level p_level, const char *p_fmt, ...);
-
-#  ifndef KB_LOG_TRACE
-#    define KB_LOG_TRACE(...) kb_log_internal(KB_LOG_LEVEL_TRACE, __VA_ARGS__)
-#  endif
-
-#  ifndef KB_LOG_DEBUG
-#    define KB_LOG_DEBUG(...) kb_log_internal(KB_LOG_LEVEL_DEBUG, __VA_ARGS__)
-#  endif
-
-#  ifndef KB_LOG_INFO
-#    define KB_LOG_INFO(...) kb_log_internal(KB_LOG_LEVEL_INFO, __VA_ARGS__)
-#  endif
-
-#  ifndef KB_LOG_WARN
-#    define KB_LOG_WARN(...) kb_log_internal(KB_LOG_LEVEL_WARN, __VA_ARGS__)
-#  endif
-
-#  ifndef KB_LOG_ERROR
-#    define KB_LOG_ERROR(...) kb_log_internal(KB_LOG_LEVEL_ERROR, __VA_ARGS__)
-#  endif
-
-#  ifndef KB_LOG_CRITICAL
-#    define KB_LOG_CRITICAL(...) kb_log_internal(KB_LOG_LEVEL_CRITICAL, __VA_ARGS__)
-#  endif
-
-#endif
 
 #ifdef __cplusplus
 }

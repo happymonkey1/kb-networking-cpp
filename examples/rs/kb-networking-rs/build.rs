@@ -32,12 +32,16 @@ fn main() {
 
     // println!("cargo:rustc-link-search=native={}", out_dir.join("lib").display());
     println!("cargo:rustc-link-search={}/", out_dir.display());
+    println!("cargo:rustc-link-search={}/vcpkg_installed/x64-linux/lib/", out_dir.display());
     println!("cargo:rustc-link-lib=static=kb-networking");
+    println!("cargo:rustc-link-lib=static=fmt");
 
     println!("cargo:rerun-if-changed=../../../src/");
     println!("cargo:rerun-if-changed=../../../include/");
     println!("cargo:rerun-if-changed=../../../CMakeLists.txt");
     println!("cargo:rerun-if-changed=../../../CMakePresets.json");
+
+    println!("cargo:rustc-link-lib=stdc++");
 
     let bindings = bindgen::Builder::default()
         .header("kb_networking_wrapper.h")
