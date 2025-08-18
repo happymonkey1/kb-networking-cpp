@@ -4,3 +4,7 @@ CMakeUserPresets.json
 /cmake-build-debug
 /**/*.log
 /**/target/
+/**/*.env
+/**/CMakeCache.txt
+/Testing
+/vcpkg_installed

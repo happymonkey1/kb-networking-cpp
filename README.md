@@ -2,6 +2,11 @@
 
 ## Build from source
 
+Add an env variable for the `kbnetworkingcpp` vcpkg overlay:
+```bash
+export VCPKG_OVERLAY_PORTS=PATH/TO/kb-networking-cpp/vcpkg-overlays
+```
+
 Set up the build files:
 `cmake --preset default -B ./build`
 

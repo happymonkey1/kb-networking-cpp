@@ -6,6 +6,7 @@
 #define KB_NETWORKING_CPP_KB_NETWORKING_H
 
 #include "kb_core.h"
+#include "kb/net/kb_server.h"
 
 #ifdef __cplusplus
 extern "C" {

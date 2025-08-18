@@ -13,6 +13,15 @@ find_package(fmt REQUIRED)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
+if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    set(KB_NETWORKING_STANDALONE ON)
+
+    # configure project version
+    # TODO
+else()
+    set(KB_NETWORKING_STANDALONE OFF)
+endif()
+
 set(KB_NETWORKING_PUBLIC_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/include/kb/kb_networking.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/kb/kb_networking_cpp.hpp
@@ -26,8 +35,9 @@ endif()
 
 option(BUILD_SHARED_LIBS "build shared libraries" ${BUILD_SHARED_LIBS_DEFAULT})
 
+option(KB_NETWORKING_BUILD_TESTS "kb-networking: build tests" ${KB_NETWORKING_STANDALONE})
+
 add_library(kb-networking
-        src/entrypoint.cpp
         src/kb/core/logger.cpp
         include/kb/kb_networking.h
         include/kb/kb_networking_cpp.hpp
@@ -42,6 +52,9 @@ add_library(kb-networking
         include/kb/net/kb_client_info.h
         src/kb/net/server.cpp
         src/kb/kb_networking.cpp
+        include/kb/async/awaitable.hpp
+        src/kb/net/client.hpp
+        src/kb/net/packet.h
 )
 
 target_include_directories(kb-networking PUBLIC include)
@@ -53,21 +66,21 @@ target_link_libraries(kb-networking PRIVATE spdlog::spdlog_header_only)
 target_link_libraries(kb-networking PRIVATE msgpack-cxx)
 target_link_libraries(kb-networking PRIVATE fmt::fmt)
 
-add_executable(kb-networking-cli src/entrypoint.cpp)
-
-target_include_directories(kb-networking-cli PUBLIC include)
-
-target_link_libraries(kb-networking-cli PRIVATE GameNetworkingSockets::shared)
-target_link_libraries(kb-networking-cli PRIVATE spdlog::spdlog_header_only)
-target_link_libraries(kb-networking-cli PRIVATE msgpack-cxx)
-target_link_libraries(kb-networking-cli PRIVATE kb-networking)
-
 if (BUILD_SHARED_LIBS)
     set_target_properties(kb-networking PROPERTIES POSITION_INDEPENDENT_CODE ON)
     target_compile_definitions(kb-networking PRIVATE KB_NETWORKING_BUILD)
     target_compile_definitions(kb-networking PUBLIC  KB_NETWORKING_SHARED)
 endif()
 
-set_target_properties(kb-networking-cli kb-networking
+set_target_properties(kb-networking
         PROPERTIES
-        PUBLIC_HEADER "${LLAMA_PUBLIC_HEADERS}")
+        PUBLIC_HEADER "${KB_NETWORKING_PUBLIC_HEADERS}")
+
+if (KB_NETWORKING_BUILD_TESTS)
+    enable_testing()
+    include(CTest)
+    add_subdirectory(tests)
+endif()
+
+
+# TODO: copy vcpkg.json from root into vcpkg-overlays/kbnetworking/

@@ -4,7 +4,7 @@
 
 #include "kb/kb_core.h"
 #include "kb/core/logger.hpp"
-#include "kb/types.h"
+#include "types.h"
 
 #include <cstdarg>
 

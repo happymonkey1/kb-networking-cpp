@@ -2,7 +2,18 @@ use std::env;
 use std::path::PathBuf;
 use std::process::Command;
 
+
 fn main() {
+    println!("VCPKG_ROOT = {}", env::var("VCPKG_ROOT").unwrap_or_else(|_| "Not Set".to_string()));
+    println!("VCPKG_OVERLAY_PORTS = {}", env::var("VCPKG_OVERLAY_PORTS").unwrap_or_else(|_| "Not Set".to_string()));
+
+    Command::new("vcpkg")
+        .args(["search", "kbnetworking"])
+        .output()
+        .expect("vcpkg works");
+
+    // vcpkg::find_package("kbnetworking").expect("Could not find kbnetworking via vcpkg");
+
     let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
     let out_dir = PathBuf::from(format!("{}/../../../build", manifest_dir.display()).to_string());
     let cpp_project_root = manifest_dir.join("../../../");
@@ -10,7 +21,7 @@ fn main() {
     let configure_status = Command::new("cmake")
         .arg("-S")
         .arg(&cpp_project_root)
-        .arg(format!("--preset=vcpkg"))
+        .arg("--preset=vcpkg".to_string())
         .arg(format!("-D CMAKE_INSTALL_PREFIX={}", out_dir.display()))
         .status()
         .expect("Failed to execute CMake configure step.");
@@ -35,6 +46,8 @@ fn main() {
     println!("cargo:rustc-link-search={}/vcpkg_installed/x64-linux/lib/", out_dir.display());
     println!("cargo:rustc-link-lib=static=kb-networking");
     println!("cargo:rustc-link-lib=static=fmt");
+    println!("cargo:rustc-link-lib=static=GameNetworkingSockets_s");
+    println!("cargo:rustc-link-lib=static=protobuf");
 
     println!("cargo:rerun-if-changed=../../../src/");
     println!("cargo:rerun-if-changed=../../../include/");

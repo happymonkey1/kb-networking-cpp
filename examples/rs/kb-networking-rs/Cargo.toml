@@ -6,3 +6,4 @@ edition = "2024"
 [build-dependencies]
 bindgen = "0.72.0"
 cmake = { version = "0.1.54", features = [] }
+vcpkg = "0.2.15"

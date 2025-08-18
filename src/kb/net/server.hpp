@@ -5,7 +5,8 @@
 #ifndef KB_NETWORKING_CPP_SERVER_H
 #define KB_NETWORKING_CPP_SERVER_H
 
-#include "kb/types.h"
+#include "../types.h"
+#include "packet.h"
 
 #include <steam/steamnetworkingsockets.h>
 #include <steam/isteamnetworkingutils.h>
@@ -14,6 +15,8 @@
 #ifndef STEAMNETWORKINGSOCKETS_OPENSOURCE
 #include <steam/steam_api.h>
 #endif
+
+#include <msgpack.hpp>
 
 #include <thread>
 #include <map>
@@ -33,6 +36,8 @@ public:
 
   static constexpr u32 k_default_poll_timeout = 10;
 
+  using packet_handler_func_t = std::function<void(HSteamNetConnection p_conn, const msgpack::object& p_object)>;
+
 public:
   Server();
   ~Server() noexcept;
@@ -43,12 +48,20 @@ public:
 
   auto poll() noexcept -> void;
 
-  auto send(HSteamNetConnection p_conn, const void *p_data, size_t p_len, bool p_reliable) const noexcept -> bool;
-  auto broadcast(const void *p_data, size_t p_len, bool p_reliable) noexcept -> bool;
-  auto disconnect(HSteamNetConnection p_conn, i32 p_reason = 0) noexcept;
+  template <typename T>
+  [[nodiscard]] auto send(HSteamNetConnection p_conn, packet_type_t p_packet_type, const T& p_obj, bool p_reliable) const noexcept -> bool;
+  [[nodiscard]] auto send_raw(HSteamNetConnection p_conn, const void *p_data, size_t p_len, bool p_reliable) const noexcept -> bool;
 
-  auto is_running() const noexcept -> bool { return m_is_running.load(); }
-  auto port() const noexcept -> u16 { return m_port; }
+  template <typename T>
+  [[nodiscard]] auto broadcast(packet_type_t p_packet_type, const T& p_obj, bool p_reliable) noexcept -> bool;
+  [[nodiscard]] auto broadcast_raw(const void *p_data, size_t p_len, bool p_reliable) noexcept -> bool;
+
+  auto disconnect(HSteamNetConnection p_conn, i32 p_reason = 0) noexcept -> void;
+
+  [[nodiscard]] auto bind_packet_handler(packet_type_t p_packet_type, packet_handler_func_t&& packet_handler_func) noexcept -> bool;
+
+  [[nodiscard]] auto is_running() const noexcept -> bool { return m_is_running.load(); }
+  [[nodiscard]] auto port() const noexcept -> u16 { return m_port; }
 
   auto set_on_data_callback(const data_received_callback_func_t& p_call) noexcept -> void {
     m_data_received_callback = p_call;
@@ -62,7 +75,7 @@ public:
     m_client_disconnected_callback = p_call;
   }
 
-  auto get_client_info(HSteamNetConnection p_conn) noexcept -> const client_info_t * {
+  [[nodiscard]] auto get_client_info(HSteamNetConnection p_conn) noexcept -> const client_info_t * {
     std::lock_guard lock{ m_client_mutex };
     const auto client = m_clients.find(p_conn);
     return client != m_clients.end() ? &client->second : nullptr;
@@ -73,7 +86,10 @@ private:
   static auto connection_status_changed_callback(SteamNetConnectionStatusChangedCallback_t *p_info) noexcept -> void;
   auto on_connection_status_changed(const SteamNetConnectionStatusChangedCallback_t *p_info) noexcept -> void;
 
+  auto handle_packet(HSteamNetConnection p_conn, const void * p_data, size_t p_len) noexcept -> void;
+
   auto on_fatal_message(const char *p_msg) noexcept -> void;
+
 private:
   std::thread m_network_thread;
   std::atomic<bool> m_is_running{ false };
@@ -86,11 +102,40 @@ private:
   std::map<HSteamNetConnection, client_info_t> m_clients;
   std::mutex m_client_mutex;
 
+  // Map of packet dispatch handers based on incoming packet type
+  std::unordered_map<packet_type_t, packet_handler_func_t> m_packet_handlers;
+
   ISteamNetworkingSockets *m_interface = nullptr;
   HSteamListenSocket m_listen_socket = k_HSteamListenSocket_Invalid;
   HSteamNetPollGroup m_poll_group = k_HSteamNetPollGroup_Invalid;
 };
 
+template <typename T>
+auto Server::send(const HSteamNetConnection p_conn, const packet_type_t p_packet_type,
+                  const T& p_obj, const bool p_reliable) const noexcept -> bool {
+  msgpack::sbuffer buffer;
+  msgpack::packer packer{ &buffer };
+
+  packer.pack_array(2);
+  packer.pack(p_packet_type);
+  packer.pack(p_obj);
+
+  return send_raw(p_conn, buffer.data(), buffer.size(), p_reliable);
 }
+
+template <typename T>
+auto Server::broadcast(const packet_type_t p_packet_type, const T& p_obj,
+                       const bool p_reliable) noexcept -> bool {
+  msgpack::sbuffer buffer;
+  msgpack::packer packer{ &buffer };
+
+  packer.pack_array(2);
+  packer.pack(p_packet_type);
+  packer.pack(p_obj);
+
+  return broadcast_raw(buffer.data(), buffer.size(), p_reliable);
+}
+
+}  // namespace kb::net
 
 #endif  //KB_NETWORKING_CPP_SERVER_H

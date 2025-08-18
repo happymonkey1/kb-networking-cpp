@@ -129,7 +129,7 @@ auto Server::poll() noexcept -> void {
   m_interface->RunCallbacks();
 }
 
-auto Server::send(const HSteamNetConnection p_conn, const void* p_data, const size_t p_len,
+auto Server::send_raw(const HSteamNetConnection p_conn, const void* p_data, const size_t p_len,
                   const bool p_reliable) const noexcept -> bool {
   const int flags = p_reliable ? k_nSteamNetworkingSend_Reliable : k_nSteamNetworkingSend_Unreliable;
   return m_interface->SendMessageToConnection(
@@ -141,12 +141,12 @@ auto Server::send(const HSteamNetConnection p_conn, const void* p_data, const si
   );
 }
 
-auto Server::broadcast(const void* p_data, const size_t p_len,
+auto Server::broadcast_raw(const void* p_data, const size_t p_len,
                        const bool p_reliable) noexcept -> bool {
   std::lock_guard lock{ m_client_mutex };
   bool ok = true;
   for (auto& conn : m_clients | std::views::keys) {
-    if (!send(conn, p_data, p_len, p_reliable)) {
+    if (!send_raw(conn, p_data, p_len, p_reliable)) {
       ok = false;
       KB_LOG_ERROR("Failed to send data to client: {}", conn);
     }
@@ -155,10 +155,21 @@ auto Server::broadcast(const void* p_data, const size_t p_len,
   return ok;
 }
 
-auto Server::disconnect(const HSteamNetConnection p_conn, const i32 p_reason) noexcept {
+auto Server::disconnect(const HSteamNetConnection p_conn, const i32 p_reason) noexcept -> void {
   m_interface->CloseConnection(p_conn, p_reason, "Disconnected", false);
   std::lock_guard lock{ m_client_mutex };
   m_clients.erase(p_conn);
+}
+auto Server::bind_packet_handler(
+    packet_type_t p_packet_type,
+    packet_handler_func_t&& packet_handler_func) noexcept -> bool {
+  if (m_packet_handlers.contains(p_packet_type)) {
+    KB_LOG_ERROR("Failed to bind packet handler for packet type: {}. It is already bound!", p_packet_type);
+    return false;
+  }
+
+  m_packet_handlers[p_packet_type] = packet_handler_func;
+  return true;
 }
 
 auto Server::network_loop() noexcept -> void {
@@ -235,6 +246,31 @@ auto Server::on_connection_status_changed(
       // The server can ignore connected status
       break;
     }
+  }
+}
+
+auto Server::handle_packet(const HSteamNetConnection p_conn, const void* p_data,
+                           const size_t p_len) noexcept -> void {
+  try {
+    const msgpack::object_handle object_handle = msgpack::unpack(static_cast<const char*>(p_data), p_len);
+    const msgpack::object object = object_handle.get();
+
+    if (object.type != msgpack::type::ARRAY || object.via.array.size != 2) {
+      KB_LOG_ERROR("Invalid packet type");
+      return;
+    }
+
+    const auto packet_type = object.via.array.ptr[0].as<packet_type_t>();
+    const msgpack::object payload = object.via.array.ptr[1].as<msgpack::object>();
+
+    if (const auto packet_handler_func = m_packet_handlers.find(packet_type);
+        packet_handler_func != m_packet_handlers.end()) {
+      packet_handler_func->second(p_conn, payload);
+    } else {
+      KB_LOG_ERROR("Received valid packet but failed to retrieve any packet handler");
+    }
+  } catch (const std::exception& e) {
+    KB_LOG_ERROR("Failed to handle packet with msgpack: {}", e.what());
   }
 }
 
