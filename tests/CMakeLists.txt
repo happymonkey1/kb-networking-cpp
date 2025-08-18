@@ -116,3 +116,6 @@ function(kbnetworking_test_and_build source)
 endfunction()
 
 kbnetworking_test_and_build(test_server.cpp)
+kbnetworking_test_and_build(test_c.c)
+kbnetworking_test_and_build(test_client.cpp)
+kbnetworking_test_and_build(test_e2e.cpp)

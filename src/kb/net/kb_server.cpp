@@ -3,7 +3,7 @@
 //
 
 #include "kb/net/kb_server.h"
-#include "../../../include/kb/core/logger.hpp"
+#include "kb/core/logger.hpp"
 #include "server.hpp"
 
 #include <mutex>
@@ -103,7 +103,7 @@ KB_API void kb_server_disconnect(kb_server_t * p_server, kb_conn_t p_conn,
   p_server->m_impl->disconnect(p_conn, p_reason_code);
 }
 
-KB_API bool kb_server_is_running(kb_server_t * p_server) {
+KB_API bool kb_server_is_running(const kb_server_t * p_server) {
   if (!p_server) {
     return false;
   }
@@ -111,7 +111,7 @@ KB_API bool kb_server_is_running(kb_server_t * p_server) {
   return p_server->m_impl->is_running();
 }
 
-KB_API uint16_t kb_server_port(kb_server_t * p_server) {
+KB_API uint16_t kb_server_port(const kb_server_t * p_server) {
   if (!p_server) {
     return 0;
   }

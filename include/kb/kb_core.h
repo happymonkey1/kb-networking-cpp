@@ -24,7 +24,7 @@
 #endif
 
 #ifndef KB_ASSERT
-#  define KB_ASSERT(x, ...) do { if (!(x)) KB_ABORT("Assertion failed ({}): {}", #x, __VA_ARGS__); } while (false)
+#  define KB_ASSERT(x, ...) do { if (!(x)) KB_ABORT("Assertion failed (%s): %s", #x, __VA_ARGS__); } while (false)
 #endif
 
 #ifndef KB_UNUSED

@@ -6,10 +6,10 @@
 #define KB_NETWORKING_CPP_SERVER_H
 
 #include "../types.h"
-#include "packet.h"
+#include "packet.hpp"
 
-#include <steam/steamnetworkingsockets.h>
 #include <steam/isteamnetworkingutils.h>
+#include <steam/steamnetworkingsockets.h>
 
 #include <functional>
 #ifndef STEAMNETWORKINGSOCKETS_OPENSOURCE
@@ -86,7 +86,7 @@ private:
   static auto connection_status_changed_callback(SteamNetConnectionStatusChangedCallback_t *p_info) noexcept -> void;
   auto on_connection_status_changed(const SteamNetConnectionStatusChangedCallback_t *p_info) noexcept -> void;
 
-  auto handle_packet(HSteamNetConnection p_conn, const void * p_data, size_t p_len) noexcept -> void;
+  auto handle_packet(HSteamNetConnection p_conn, const void * p_data, size_t p_len) noexcept -> bool;
 
   auto on_fatal_message(const char *p_msg) noexcept -> void;
 

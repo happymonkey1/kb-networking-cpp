@@ -10,20 +10,14 @@
 
 namespace kb::net {
 
-static Server *s_instance = nullptr;
+static Server * s_instance = nullptr;
 
 Server::Server() {
-  if (SteamDatagramErrMsg err_msg; !GameNetworkingSockets_Init(nullptr, err_msg)) {
-    KB_LOG_ERROR("Failed to initialize Steam GameNetworkingSockets: {}", err_msg);
-    KB_ABORT("Failed to initialize Steam GameNetworkingSockets: %s", err_msg);
-  }
-
   m_interface = SteamNetworkingSockets();
 }
 
 Server::~Server() noexcept {
   stop();
-  GameNetworkingSockets_Kill();
 }
 
 auto Server::start_async(const u16 p_port) noexcept -> bool {
@@ -70,12 +64,14 @@ auto Server::start_manual(const u16 p_port) noexcept -> bool {
     return false;
   }
 
+  s_instance = this;
   m_port = p_port;
   m_is_running.store(true);
   return true;
 }
 
 auto Server::stop() noexcept -> void {
+  s_instance = nullptr;
   if (!m_is_running.exchange(false)) {
     return;
   }
@@ -113,9 +109,14 @@ auto Server::poll() noexcept -> void {
 
   for (u32 i = 0; i < message_count; ++i) {
     auto *message = messages[i];
-    if (m_data_received_callback) {
-      const auto conn = message->m_conn;
-      if (const auto* client = get_client_info(conn)) {
+    const auto conn = message->m_conn;
+
+    // Try handle packet with registered handler
+    const auto handle_packet_res = handle_packet(conn, message->m_pData, message->m_cbSize);
+
+    if (!handle_packet_res && m_data_received_callback) {
+      // Otherwise, fallback to generate data received callback
+      if (const auto* client = get_client_info(conn); client) {
         m_data_received_callback(
           *client,
           message->m_pData,
@@ -169,6 +170,7 @@ auto Server::bind_packet_handler(
   }
 
   m_packet_handlers[p_packet_type] = packet_handler_func;
+  KB_LOG_DEBUG("Successfully bound packet handler for packet: {}", p_packet_type);
   return true;
 }
 
@@ -250,14 +252,14 @@ auto Server::on_connection_status_changed(
 }
 
 auto Server::handle_packet(const HSteamNetConnection p_conn, const void* p_data,
-                           const size_t p_len) noexcept -> void {
+                           const size_t p_len) noexcept -> bool {
   try {
     const msgpack::object_handle object_handle = msgpack::unpack(static_cast<const char*>(p_data), p_len);
     const msgpack::object object = object_handle.get();
 
     if (object.type != msgpack::type::ARRAY || object.via.array.size != 2) {
       KB_LOG_ERROR("Invalid packet type");
-      return;
+      return false;
     }
 
     const auto packet_type = object.via.array.ptr[0].as<packet_type_t>();
@@ -265,12 +267,17 @@ auto Server::handle_packet(const HSteamNetConnection p_conn, const void* p_data,
 
     if (const auto packet_handler_func = m_packet_handlers.find(packet_type);
         packet_handler_func != m_packet_handlers.end()) {
+      KB_LOG_DEBUG("Handling packet type: {}", packet_type);
       packet_handler_func->second(p_conn, payload);
     } else {
       KB_LOG_ERROR("Received valid packet but failed to retrieve any packet handler");
+      return false;
     }
+
+    return true;
   } catch (const std::exception& e) {
     KB_LOG_ERROR("Failed to handle packet with msgpack: {}", e.what());
+    return false;
   }
 }
 

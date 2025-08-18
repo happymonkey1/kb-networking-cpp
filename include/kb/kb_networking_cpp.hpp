@@ -15,6 +15,7 @@
 
 // TODO: these shouldn't be exposed
 #include "kb/types.h"
-#include "kb/net/kb_server.h"
+#include "kb/net/server.hpp"
+#include "kb/net/client.hpp"
 
 #endif  //KB_NETWORKING_CPP_KB_NETWORKING_CPP_H

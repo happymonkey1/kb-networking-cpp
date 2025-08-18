@@ -13,10 +13,12 @@ class awaitable {
 public:
   awaitable() = default;
 
-  awaitable(const awaitable&) = default;
+  awaitable(const awaitable& p_other) = default;
   awaitable& operator=(const awaitable&) = default;
-  awaitable(awaitable&&) = default;
-  awaitable& operator=(awaitable&&) = default;
+  awaitable(awaitable&& p_other) noexcept
+    : m_handle{ p_other.m_handle }, m_exception{ p_other.m_exception },
+      m_mutex{ std::move(p_other.m_mutex) }, m_result{ p_other.m_result } {}
+  awaitable& operator=(awaitable&&) noexcept = default;
 
   auto set_result(T p_value) -> void {
     std::unique_lock lock{ m_mutex };

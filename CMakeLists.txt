@@ -54,7 +54,11 @@ add_library(kb-networking
         src/kb/kb_networking.cpp
         include/kb/async/awaitable.hpp
         src/kb/net/client.hpp
-        src/kb/net/packet.h
+        src/kb/net/packet.hpp
+        src/kb/net/client.cpp
+        src/kb/net/packet.cpp
+        src/kb/net/network_utils.h
+        src/kb/net/network_utils.cpp
 )
 
 target_include_directories(kb-networking PUBLIC include)
