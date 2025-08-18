@@ -9,6 +9,10 @@ find_package(GameNetworkingSockets CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(msgpack-cxx REQUIRED)
 find_package(fmt REQUIRED)
+#find_package(libcoro CONFIG REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(LIBCORO REQUIRED libcoro)
+link_directories(${LIBCORO_LIBRARY_DIRS})
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -56,7 +60,6 @@ add_library(kb-networking
         src/kb/net/client.hpp
         src/kb/net/packet.hpp
         src/kb/net/client.cpp
-        src/kb/net/packet.cpp
         src/kb/net/network_utils.h
         src/kb/net/network_utils.cpp
 )
@@ -69,6 +72,9 @@ target_link_libraries(kb-networking PRIVATE GameNetworkingSockets::shared)
 target_link_libraries(kb-networking PRIVATE spdlog::spdlog_header_only)
 target_link_libraries(kb-networking PRIVATE msgpack-cxx)
 target_link_libraries(kb-networking PRIVATE fmt::fmt)
+#target_link_libraries(kb-networking PUBLIC libcoro)
+target_include_directories(kb-networking PUBLIC ${LIBCORO_INCLUDE_DIRS})
+target_link_libraries(kb-networking PUBLIC ${LIBCORO_LIBRARIES})
 
 if (BUILD_SHARED_LIBS)
     set_target_properties(kb-networking PROPERTIES POSITION_INDEPENDENT_CODE ON)

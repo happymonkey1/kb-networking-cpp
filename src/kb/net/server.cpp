@@ -80,7 +80,7 @@ auto Server::stop() noexcept -> void {
     m_network_thread.join();
   }
 
-  std::lock_guard lock(m_client_mutex);
+  std::scoped_lock lock(m_client_mutex);
   KB_LOG_TRACE("Server stopped");
   for (const auto& conn : m_clients | std::views::keys) {
     m_interface->CloseConnection(conn, 0, "Server shutting down", true);
@@ -144,7 +144,7 @@ auto Server::send_raw(const HSteamNetConnection p_conn, const void* p_data, cons
 
 auto Server::broadcast_raw(const void* p_data, const size_t p_len,
                        const bool p_reliable) noexcept -> bool {
-  std::lock_guard lock{ m_client_mutex };
+  std::scoped_lock lock{ m_client_mutex };
   bool ok = true;
   for (auto& conn : m_clients | std::views::keys) {
     if (!send_raw(conn, p_data, p_len, p_reliable)) {
@@ -158,7 +158,7 @@ auto Server::broadcast_raw(const void* p_data, const size_t p_len,
 
 auto Server::disconnect(const HSteamNetConnection p_conn, const i32 p_reason) noexcept -> void {
   m_interface->CloseConnection(p_conn, p_reason, "Disconnected", false);
-  std::lock_guard lock{ m_client_mutex };
+  std::scoped_lock lock{ m_client_mutex };
   m_clients.erase(p_conn);
 }
 auto Server::bind_packet_handler(

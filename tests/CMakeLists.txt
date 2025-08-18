@@ -104,6 +104,9 @@ function(kbnetworking_test_and_build source)
     target_link_libraries(${TEST_TARGET} PRIVATE spdlog::spdlog_header_only)
     target_link_libraries(${TEST_TARGET} PRIVATE msgpack-cxx)
     target_link_libraries(${TEST_TARGET} PRIVATE kb-networking)
+    #target_link_libraries(${TEST_TARGET} PUBLIC libcoro)
+    target_include_directories(${TEST_TARGET} PUBLIC ${LIBCORO_INCLUDE_DIRS})
+    target_link_libraries(${TEST_TARGET} PUBLIC ${LIBCORO_LIBRARIES})
 
     add_test(
             NAME ${TEST_TARGET}
@@ -119,3 +122,4 @@ kbnetworking_test_and_build(test_server.cpp)
 kbnetworking_test_and_build(test_c.c)
 kbnetworking_test_and_build(test_client.cpp)
 kbnetworking_test_and_build(test_e2e.cpp)
+kbnetworking_test_and_build(test_async.cpp)

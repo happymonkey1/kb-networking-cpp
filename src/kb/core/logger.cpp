@@ -12,9 +12,9 @@ auto Logger::init() noexcept -> void {
   sinks.emplace_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
   sinks.emplace_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>("kb-networking-cpp.log"));
 
-  const auto default_log_level = spdlog::level::debug;
+  const auto default_log_level = spdlog::level::trace;
 
-  sinks[0]->set_pattern("%^[%T] %n: %v%$");
+  sinks[0]->set_pattern("%^[%T] [Thread%5t] [%l] %n: %v%$");
   sinks[0]->set_level(default_log_level);
   sinks[1]->set_pattern("[%T] [Thread%5t] [%l] %n: %v");
   sinks[1]->set_level(spdlog::level::trace);

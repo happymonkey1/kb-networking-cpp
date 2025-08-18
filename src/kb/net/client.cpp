@@ -11,6 +11,7 @@ Client::~Client() noexcept {
 }
 
 auto Client::stop() noexcept -> void {
+  s_instance = nullptr;
   if (!m_running.exchange(false)) {
     return;
   }
@@ -24,7 +25,7 @@ auto Client::stop() noexcept -> void {
     m_conn = k_HSteamNetConnection_Invalid;
   }
 
-  s_instance = nullptr;
+  KB_LOG_DEBUG("Finished destroying client");
 }
 
 auto Client::poll() noexcept -> void {
@@ -54,30 +55,43 @@ auto Client::connect(const std::string& p_address, u16 p_port) noexcept
 }
 
 auto Client::async_connect(const std::string& p_address, u16 p_port) noexcept
-    -> awaitable<bool> {
-
-  KB_ASSERT(false, "not implemented");
-
-  awaitable<bool> result;
+    -> coro::task<bool> {
+  co_await m_scheduler->schedule();
 
   if (m_running.load()) {
-    result.set_result(false);
-    return awaitable<bool>{}; // FIXME
+    KB_LOG_WARN("[async_connect] client is already running");
+    co_return false;
   }
 
   const auto res = try_connect(p_address, p_port);
+  m_running.store(res);
   if (!res) {
-    return awaitable<bool>{}; // FIXME
+    KB_LOG_ERROR("[async_connect] Failed to connect to server, returning early");
+    co_return false;
   }
 
   m_network_thread = std::thread([this] { network_loop(); });
 
-  return awaitable<bool>{}; // FIXME:
+  constexpr u32 k_max_wait_ms = 1000;
+  constexpr u32 k_sleep_duration = 50;
+  constexpr u32 max_iters = k_max_wait_ms / k_sleep_duration;
+  u32 iter = 0;
+  while (m_connection_status == connection_status_t::connecting) {
+    if (iter++ >= max_iters) {
+      KB_LOG_WARN("[async_connect] Failed to connect to server after {} ms", k_sleep_duration);
+      break;
+    }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+  }
+
+  KB_LOG_INFO("[Client] Successfully connected to server: {}:{}", p_address, p_port);
+  co_return m_connection_status == connection_status_t::connected;
 }
 
 auto Client::try_receive_raw(msgpack::object_handle& p_out_object,
                              HSteamNetConnection& p_out_conn) noexcept -> void {
-  std::lock_guard lock{ m_message_queue_mutex };
+  std::scoped_lock lock{ m_message_queue_mutex };
   if (m_message_queue.empty()) {
     return;
   }
@@ -101,7 +115,7 @@ auto Client::send_raw(const void* p_data, const size_t p_len,
 
 auto Client::bind_handler(packet_type_t p_packet_type,
                           packet_handler_func_t&& p_handler) noexcept -> bool {
-  std::lock_guard lock{ m_handler_mutex };
+  std::scoped_lock lock{ m_handler_mutex };
   if (m_handlers.contains(p_packet_type)) {
     return false;
   }
@@ -111,7 +125,7 @@ auto Client::bind_handler(packet_type_t p_packet_type,
 }
 
 auto Client::unbind_handler(packet_type_t p_packet_type) noexcept -> void {
-  std::lock_guard lock{ m_handler_mutex };
+  std::scoped_lock lock{ m_handler_mutex };
   m_handlers.erase(p_packet_type);
 }
 
@@ -133,7 +147,7 @@ auto Client::poll_messages() noexcept -> void {
 auto Client::push_message_to_queue(const HSteamNetConnection p_conn,
                                    const void* p_data,
                                    const size_t p_len) noexcept -> void {
-  std::lock_guard lock{ m_message_queue_mutex };
+  std::scoped_lock lock{ m_message_queue_mutex };
   m_message_queue.emplace_back(
     incoming_message_t{
       .m_conn = p_conn,
@@ -146,18 +160,42 @@ auto Client::push_message_to_queue(const HSteamNetConnection p_conn,
 }
 
 auto Client::network_loop() noexcept -> void {
+  KB_LOG_INFO("[Client] Entered network loop");
   while (m_running.load()) {
     poll();
     std::this_thread::sleep_for(std::chrono::milliseconds(k_default_poll_delay_ms));
   }
 }
+
 auto Client::register_packet_awaiter(packet_type_t p_packet_type,
-                                     awaiting_coroutine_t p_awaiting) noexcept
+                                     awaiting_packet_t p_awaiting) noexcept
     -> void {
-  std::lock_guard lock{ m_awaiters_mutex };
-  auto& queue = m_awaiters[p_packet_type];
-  queue.push(std::move(p_awaiting));
+  std::scoped_lock lock{ m_awaiters_mutex };
+  if (m_awaiters.contains(p_packet_type)) {
+    auto& queue = m_awaiters[p_packet_type];
+    queue.push(std::move(p_awaiting));
+  } else {
+    std::queue<awaiting_packet_t> queue;
+    queue.push(std::move(p_awaiting));
+    m_awaiters.emplace(
+      p_packet_type,
+      std::move(queue)
+    );
+  }
 }
+
+auto Client::get_packet_awaiter(packet_type_t p_packet_type) noexcept -> std::optional<awaiting_packet_t> {
+  std::scoped_lock lock{ m_awaiters_mutex };
+  auto& queue = m_awaiters[p_packet_type];
+  if (queue.empty()) {
+    return std::nullopt;
+  }
+
+  const auto awaiting = std::make_optional(std::move(queue.front()));
+  queue.pop();
+  return std::move(awaiting);
+}
+
 auto Client::connection_status_changed_callback(
     SteamNetConnectionStatusChangedCallback_t *p_info) noexcept -> void {
   if (!s_instance) {
@@ -208,12 +246,23 @@ auto Client::on_connection_status_changed(
 }
 
 auto Client::async_wait_for_packet(packet_type_t p_packet_type) noexcept
-    -> awaitable_packet_t {
-  return awaitable_packet_t{
-    this,
-    p_packet_type
-  };
+    -> coro::task<std::optional<msgpack::object>> {
+  // Immediately schedule on the executor
+  co_await m_scheduler->schedule();
+  coro::event event;
+  register_packet_awaiter(p_packet_type, {
+      .m_event = &event,
+      .m_data = std::nullopt,
+  });
+  co_await event;
+  auto awaiter = get_packet_awaiter(p_packet_type);
+  if (!awaiter.has_value() || !awaiter->m_data) {
+    co_return std::nullopt;
+  }
+
+  co_return std::optional(std::move(*awaiter->m_data));
 }
+
 auto Client::try_connect(const std::string& p_address, u16 p_port) noexcept
     -> bool {
   m_connection_status = connection_status_t::connecting;
@@ -245,7 +294,7 @@ auto Client::try_connect(const std::string& p_address, u16 p_port) noexcept
 auto Client::process_incoming_messages() noexcept -> void {
   std::vector<incoming_message_t> local_messages;
   {
-    std::lock_guard lock{ m_message_queue_mutex };
+    std::scoped_lock lock{ m_message_queue_mutex };
     local_messages.swap(m_message_queue);
   }
 
@@ -266,13 +315,12 @@ auto Client::process_incoming_messages() noexcept -> void {
 
       // Check if we have any awaiters
       {
-        std::lock_guard lock{ m_awaiters_mutex };
+        std::scoped_lock lock{ m_message_queue_mutex };
         auto awaiters_it = m_awaiters.find(packet_type);
         if (awaiters_it != m_awaiters.end() && !awaiters_it->second.empty()) {
-          auto oldest = std::move(awaiters_it->second.front());
-          awaiters_it->second.pop();
-          *oldest.m_data = std::optional{ payload };
-          oldest.m_handle.resume();
+          auto& oldest = awaiters_it->second.front();
+          oldest.m_data = std::make_optional(payload);
+          oldest.m_event->set();
           continue;
         }
       }
@@ -280,7 +328,7 @@ auto Client::process_incoming_messages() noexcept -> void {
       // Fallback to a registered packet handler
       packet_handler_func_t packet_handler_func;
       {
-        std::lock_guard lock{ m_handler_mutex };
+        std::scoped_lock lock{ m_handler_mutex };
         if (const auto it = m_handlers.find(packet_type);
             it != m_handlers.end()) {
           packet_handler_func = it->second;

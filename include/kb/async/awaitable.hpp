@@ -8,6 +8,7 @@
 #include <mutex>
 #include <optional>
 
+namespace kb::async {
 template <typename T>
 class awaitable {
 public:
@@ -135,5 +136,18 @@ private:
   std::exception_ptr m_exception;
   std::coroutine_handle<> m_handle{};
 };
+
+// Simple coroutine type for void coroutines
+struct task {
+  struct promise_type {
+    task get_return_object() { return {}; }
+    std::suspend_never initial_suspend() { return {}; }
+    std::suspend_never final_suspend() noexcept { return {}; }
+    void return_void() {}
+    void unhandled_exception() {}
+  };
+};
+
+} // end namespace kb::async
 
 #endif  //KB_NETWORKING_AWAITABLE_HPP

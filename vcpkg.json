@@ -6,31 +6,41 @@
   "dependencies": [
     "fmt",
     "gamenetworkingsockets",
-    "spdlog",
-    "msgpack"
+    "libcoro",
+    "msgpack",
+    "pkgconf",
+    "spdlog"
   ],
-  "default-features": ["openssl"],
+  "default-features": [
+    "openssl"
+  ],
   "features": {
-    "openssl": {
-      "description": "Use OpenSSL as the crypto provider.  This is the default.",
-      "dependencies": [ "openssl" ]
+    "examples": {
+      "description": "Build the examples."
     },
     "libsodium": {
       "description": "Use libsodium as the crypto provider.",
-      "dependencies": [ "libsodium" ]
+      "dependencies": [
+        "libsodium"
+      ]
     },
-    "webrtc": {
-      "description": "Compiles WebRTC support for P2P.",
-      "dependencies": [ "abseil" ]
-    },
-    "examples": {
-      "description": "Build the examples."
+    "openssl": {
+      "description": "Use OpenSSL as the crypto provider.  This is the default.",
+      "dependencies": [
+        "openssl"
+      ]
     },
     "tests": {
       "description": "Build the tests."
     },
     "tools": {
       "description": "Build cert management tool."
+    },
+    "webrtc": {
+      "description": "Compiles WebRTC support for P2P.",
+      "dependencies": [
+        "abseil"
+      ]
     }
   }
 }
