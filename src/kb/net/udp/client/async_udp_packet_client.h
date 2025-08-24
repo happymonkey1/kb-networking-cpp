@@ -26,11 +26,25 @@ namespace kb::net {
 template <serialization_type_t SerdeT>
 class AsyncUdpPacketClient {
 public:
-  using IncomingMessage = ::kb::net::incoming_message_t<::kb::core::OwningBuffer>;
+  using serde_traits = serde::serializer_traits<SerdeT>;
+  using payload_t = serde_traits::payload_t;
 public:
 
   [[nodiscard]] static auto create() -> std::shared_ptr<AsyncUdpPacketClient> {
-    return std::make_shared<AsyncUdpPacketClient>();
+    auto self = std::make_shared<AsyncUdpPacketClient>();
+    self->m_client = UdpPacketClient<SerdeT>::create();
+
+    std::weak_ptr<AsyncUdpPacketClient> weak_self = self;
+    self->m_client->register_on_data_received_pre_handler_callback(
+      [weak_self](incoming_view_message_t msg) -> bool {
+        if (auto s = weak_self.lock()) {
+          return s->on_data_received_pre_handler(msg);
+        }
+        return false;
+      }
+    );
+
+    return self;
   }
 
   // Asynchronously initiate a connection.
@@ -38,25 +52,25 @@ public:
   [[nodiscard]] auto connect(const std::string & p_address, u16 p_port) noexcept -> coro::task<bool>;
 
   auto stop() noexcept -> void {
-    return m_client.stop();
+    return m_client->stop();
   }
 
   auto send_packet(kb_packet_type_t p_packet_type, auto&& p_object, bool p_reliable = true) noexcept -> bool {
-    return m_client.send_packet(p_packet_type, p_object, p_reliable);
+    return m_client->send_packet(p_packet_type, p_object, p_reliable);
   }
 
   template <typename T>
   auto async_wait_for_packet(packet_type_t p_packet_type) noexcept -> coro::task<std::optional<T>>;
 
-  auto get_connection_status() const noexcept -> UdpClient::connection_status_t { return m_client.get_connection_status(); }
+  auto get_connection_status() const noexcept -> UdpClient::connection_status_t { return m_client->get_connection_status(); }
 
-  auto is_running() const noexcept -> bool { return m_client.is_running(); }
+  auto is_running() const noexcept -> bool { return m_client->is_running(); }
 
 private:
 
   struct awaiting_packet_t {
-    coro::event                    * m_event;
-    std::optional<msgpack::object>   m_data;
+    coro::event       * m_event = nullptr;
+    option<payload_t>   m_data = std::nullopt;
   };
 
   auto register_packet_awaiter(
@@ -64,8 +78,11 @@ private:
     awaiting_packet_t p_awaiting
   ) noexcept -> void;
   auto get_packet_awaiter(packet_type_t p_packet_type) noexcept -> std::optional<awaiting_packet_t>;
+
+  auto on_data_received_pre_handler(incoming_view_message_t p_message) noexcept;
+
 private:
-  UdpPacketClient<SerdeT> m_client;
+  std::shared_ptr<UdpPacketClient<SerdeT>> m_client;
 
   // TODO: expose configuration through constructor
   // Reference: https://github.com/jbaldwin/libcoro?tab=readme-ov-file#thread_pool
@@ -75,49 +92,10 @@ private:
     .on_thread_stop_functor = nullptr,
   });
 
-  std::mutex m_message_queue_mutex;
-  std::vector<IncomingMessage> m_message_queue;
-
   // Async awaiters
   std::mutex m_awaiters_mutex;
   std::unordered_map<packet_type_t, std::queue<awaiting_packet_t>> m_awaiters;
 };
-
-template <serialization_type_t SerdeT>
-template <typename T>
-auto AsyncUdpPacketClient<SerdeT>::async_wait_for_packet(packet_type_t p_packet_type) noexcept
-  -> coro::task<std::optional<T>> {
-  // Immediately schedule on the executor
-  co_await m_scheduler->schedule();
-
-  // Create and register and event to notify when we receive the packet
-  coro::event event;
-  register_packet_awaiter(p_packet_type,
-    {
-      .m_event = &event,
-      .m_data = std::nullopt,
-    }
-  );
-  co_await event;
-
-  // Unpack the awaiting state and try to return the packet data
-  auto awaiter = get_packet_awaiter(p_packet_type);
-  if (!awaiter.has_value() || !awaiter->m_data) {
-    co_return std::nullopt;
-  }
-
-  auto object = std::move(*awaiter->m_data);
-
-  T packet_data{};
-  try {
-    object.convert(packet_data);
-  } catch (const std::exception& err) {
-    KB_LOG_ERROR("Failed to convert packet data to concrete serializer_t: {}", err.what());
-    co_return std::nullopt;
-  }
-
-  co_return std::make_optional(packet_data);
-}
 
 } // end namespace kb::net
 
