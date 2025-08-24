@@ -41,6 +41,8 @@ option(BUILD_SHARED_LIBS "build shared libraries" ${BUILD_SHARED_LIBS_DEFAULT})
 
 option(KB_NETWORKING_BUILD_TESTS "kb-networking: build tests" ${KB_NETWORKING_STANDALONE})
 
+# TODO: optional msgpack serde
+
 add_library(kb-networking
         # include/kb
         include/kb/kb_networking.h
@@ -105,9 +107,9 @@ target_compile_features   (kb-networking PRIVATE cxx_std_20)
 
 # Link libs
 target_link_libraries(kb-networking PRIVATE GameNetworkingSockets::shared)
-target_link_libraries(kb-networking PRIVATE spdlog::spdlog_header_only)
-target_link_libraries(kb-networking PRIVATE msgpack-cxx)
-target_link_libraries(kb-networking PRIVATE fmt::fmt)
+target_link_libraries(kb-networking PUBLIC spdlog::spdlog_header_only)
+target_link_libraries(kb-networking PUBLIC msgpack-cxx)
+target_link_libraries(kb-networking PUBLIC fmt::fmt)
 target_link_libraries(kb-networking PUBLIC ${LIBCORO_LIBRARIES})
 
 if (BUILD_SHARED_LIBS)
