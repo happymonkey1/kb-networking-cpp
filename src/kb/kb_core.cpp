@@ -8,6 +8,8 @@
 
 #include <cstdarg>
 
+static char s_msg_buffer[2048] = {};
+
 KB_API void kb_abort(const char *p_file, int p_line, const char* p_fmt, ...) {
   if (const auto logger = kb::core::Logger::get_core_logger(); logger) {
     char msg_buffer[2048] = {};
@@ -20,6 +22,15 @@ KB_API void kb_abort(const char *p_file, int p_line, const char* p_fmt, ...) {
   }
 
   std::abort();
+}
+
+KB_API const char * kb_format_str_internal(const char * p_fmt, ...) {
+  std::va_list args;
+  va_start(args, p_fmt);
+  const auto end = std::vsnprintf(s_msg_buffer, sizeof(s_msg_buffer), p_fmt, args);
+  va_end(args);
+  s_msg_buffer[end] = 0;
+  return s_msg_buffer;
 }
 
 KB_API void kb_log_internal_str(const kb_log_level p_level, const char *p_msg) {

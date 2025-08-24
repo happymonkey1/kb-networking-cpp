@@ -1,6 +1,6 @@
 #include "../../../include/kb/core/logger.hpp"
 
-#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
 namespace kb::core {
@@ -10,7 +10,7 @@ static std::shared_ptr<spdlog::logger> s_core_logger = nullptr;
 auto Logger::init() noexcept -> void {
   std::vector<spdlog::sink_ptr> sinks;
   sinks.emplace_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
-  sinks.emplace_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>("kb-networking-cpp.log"));
+  sinks.emplace_back(std::make_shared<spdlog::sinks::rotating_file_sink_mt>("kb-networking-cpp.log", 1024*1024*10, 3));
 
   const auto default_log_level = spdlog::level::trace;
 
@@ -20,6 +20,7 @@ auto Logger::init() noexcept -> void {
   sinks[1]->set_level(spdlog::level::trace);
 
   s_core_logger = std::make_shared<spdlog::logger>("[kb-networking-cpp]", sinks.begin(), sinks.end());
+  s_core_logger->set_level(default_log_level);
   spdlog::register_logger(s_core_logger);
   s_core_logger->flush_on(default_log_level);
 }
@@ -48,12 +49,13 @@ auto Logger::set_core_logger_level(const kb_log_level p_log_level) noexcept -> v
   for (auto& sink : sinks) {
     sink->set_level(spdlog_level);
   }
+  s_core_logger->set_level(spdlog_level);
   s_core_logger->flush_on(spdlog_level);
 }
 
 auto Logger::shutdown() noexcept -> void {
+  spdlog::shutdown(); // Shutdown to flush all loggers
   s_core_logger.reset();
 }
-
 
 }

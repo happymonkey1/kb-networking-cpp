@@ -10,18 +10,18 @@ struct Callbacks {
     on_data: Box<dyn FnMut(ConnectionHandle, &[u8]) + Send + 'static>,
 }
 
-pub struct Server {
+pub struct UdpServer {
     ptr: *mut bindings::kb_server_t,
     callbacks: Option<Box<Callbacks>>,
 }
 
-impl Server {
+impl UdpServer {
     pub fn new() -> Option<Self> {
         let server_ptr = unsafe { bindings::kb_server_create() };
         if server_ptr.is_null() {
             None
         } else {
-            Some(Server {
+            Some(UdpServer {
                 ptr: server_ptr,
                 callbacks: None,
             })
@@ -51,7 +51,7 @@ impl Server {
         // Get a raw pointer to the heap-allocated callbacks. This is our `void*`.
         let user_data_ptr = callbacks.as_mut() as *mut Callbacks as *mut c_void;
 
-        // Store the Box in the Server struct to manage its lifetime.
+        // Store the Box in the UdpServer struct to manage its lifetime.
         self.callbacks = Some(callbacks);
 
         unsafe {
@@ -119,7 +119,7 @@ impl Server {
     }
 }
 
-impl Drop for Server {
+impl Drop for UdpServer {
     fn drop(&mut self) {
         if self.is_running() {
             self.stop();
@@ -164,7 +164,7 @@ extern "C" fn on_data_trampoline(
     if p_user_data.is_null() { return; }
     let _ = catch_unwind(AssertUnwindSafe(|| {
         let callbacks = unsafe { &mut *(p_user_data as *mut Callbacks) };
-        // Convert the C buffer into a safe Rust slice. This is a zero-copy operation.
+        // Convert the C buffer into a safe Rust slice. This is a zero-copy_steam_to_ip_address operation.
         let data_slice = unsafe { slice::from_raw_parts(p_data as *const u8, p_len as usize) };
         (callbacks.on_data)(p_conn, data_slice);
     }));
@@ -172,11 +172,11 @@ extern "C" fn on_data_trampoline(
 
 #[cfg(test)]
 mod tests {
-    use crate::net::server::Server;
+    use crate::net::server::UdpServer;
 
     #[test]
     fn when_create_server_then_succeed() {
-        let server = Server::new();
+        let server = UdpServer::new();
         assert!(server.is_some())
     }
 

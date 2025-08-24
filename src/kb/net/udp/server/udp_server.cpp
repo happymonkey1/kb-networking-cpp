@@ -2,25 +2,29 @@
 // Created by happymonkey1 on 8/17/25.
 //
 
-#include "server.hpp"
+#include "udp_server.hpp"
+#include "kb/kb_networking_cpp.hpp"
+
+#include <steam/isteamnetworkingutils.h>
+#include <steam/steamnetworkingsockets.h>
+#include <steam/steamnetworkingtypes.h>
 
 #include <ranges>
 
-#include "kb/kb_networking_cpp.hpp"
 
 namespace kb::net {
 
-static Server * s_instance = nullptr;
+static UdpServer* s_instance = nullptr;
 
-Server::Server() {
+UdpServer::UdpServer() {
   m_interface = SteamNetworkingSockets();
 }
 
-Server::~Server() noexcept {
+UdpServer::~UdpServer() noexcept {
   stop();
 }
 
-auto Server::start_async(const u16 p_port) noexcept -> bool {
+auto UdpServer::start_async(const u16 p_port) noexcept -> bool {
   if (!start_manual(p_port)) {
     return false;
   }
@@ -30,9 +34,9 @@ auto Server::start_async(const u16 p_port) noexcept -> bool {
   return true;
 }
 
-auto Server::start_manual(const u16 p_port) noexcept -> bool {
+auto UdpServer::start_manual(const u16 p_port) noexcept -> bool {
   if (m_is_running.load()) {
-    KB_LOG_WARN("Server is already running");
+    KB_LOG_WARN("[UdpServer] UdpServer is already running");
     return false;
   }
 
@@ -56,7 +60,7 @@ auto Server::start_manual(const u16 p_port) noexcept -> bool {
     return false;
   }
 
-  KB_LOG_TRACE("Server listening on port: {}", p_port);
+  KB_LOG_TRACE("[UdpServer] UdpServer listening on port: {}", p_port);
 
   m_poll_group = m_interface->CreatePollGroup();
   if (!m_poll_group) {
@@ -70,7 +74,7 @@ auto Server::start_manual(const u16 p_port) noexcept -> bool {
   return true;
 }
 
-auto Server::stop() noexcept -> void {
+auto UdpServer::stop() noexcept -> void {
   s_instance = nullptr;
   if (!m_is_running.exchange(false)) {
     return;
@@ -81,12 +85,12 @@ auto Server::stop() noexcept -> void {
   }
 
   std::scoped_lock lock(m_client_mutex);
-  KB_LOG_TRACE("Server stopped");
+  KB_LOG_TRACE("[UdpServer] UdpServer stopped");
   for (const auto& conn : m_clients | std::views::keys) {
-    m_interface->CloseConnection(conn, 0, "Server shutting down", true);
+    m_interface->CloseConnection(conn, 0, "UdpServer shutting down", true);
   }
   m_clients.clear();
-  KB_LOG_TRACE("Disconnected all clients");
+  KB_LOG_TRACE("[UdpServer] Disconnected all clients");
 
   if (m_listen_socket != k_HSteamListenSocket_Invalid) {
     m_interface->CloseListenSocket(m_listen_socket);
@@ -98,7 +102,7 @@ auto Server::stop() noexcept -> void {
     m_poll_group = k_HSteamNetPollGroup_Invalid;
   }
 }
-auto Server::poll() noexcept -> void {
+auto UdpServer::poll() noexcept -> void {
   constexpr u32 k_message_count = 32;
   ISteamNetworkingMessage *messages[k_message_count];
   const u32 message_count = m_interface->ReceiveMessagesOnPollGroup(
@@ -111,10 +115,7 @@ auto Server::poll() noexcept -> void {
     auto *message = messages[i];
     const auto conn = message->m_conn;
 
-    // Try handle packet with registered handler
-    const auto handle_packet_res = handle_packet(conn, message->m_pData, message->m_cbSize);
-
-    if (!handle_packet_res && m_data_received_callback) {
+    if (m_data_received_callback) {
       // Otherwise, fallback to generate data received callback
       if (const auto* client = get_client_info(conn); client) {
         m_data_received_callback(
@@ -130,68 +131,60 @@ auto Server::poll() noexcept -> void {
   m_interface->RunCallbacks();
 }
 
-auto Server::send_raw(const HSteamNetConnection p_conn, const void* p_data, const size_t p_len,
-                  const bool p_reliable) const noexcept -> bool {
+auto UdpServer::send(const kb_connection_t p_conn, const void * p_data, const u32 p_size, const bool p_reliable) const noexcept -> bool {
   const int flags = p_reliable ? k_nSteamNetworkingSend_Reliable : k_nSteamNetworkingSend_Unreliable;
-  return m_interface->SendMessageToConnection(
+  const auto result = m_interface->SendMessageToConnection(
     p_conn,
     p_data,
-    static_cast<u32>(p_len),
+    p_size,
     flags,
     nullptr
   );
+
+  return result == k_EResultOK;
 }
 
-auto Server::broadcast_raw(const void* p_data, const size_t p_len,
-                       const bool p_reliable) noexcept -> bool {
+auto UdpServer::broadcast(const void * p_data, u32 p_size, bool p_reliable) noexcept -> bool {
   std::scoped_lock lock{ m_client_mutex };
+  if (m_clients.empty()) {
+    return false;
+  }
+
   bool ok = true;
   for (auto& conn : m_clients | std::views::keys) {
-    if (!send_raw(conn, p_data, p_len, p_reliable)) {
+    if (!send(conn, p_data, p_size, p_reliable)) {
       ok = false;
-      KB_LOG_ERROR("Failed to send data to client: {}", conn);
+      KB_LOG_ERROR("[UdpServer] Failed to send data to client: {}", conn);
     }
   }
 
   return ok;
 }
 
-auto Server::disconnect(const HSteamNetConnection p_conn, const i32 p_reason) noexcept -> void {
+auto UdpServer::disconnect(const kb_connection_t p_conn, const i32 p_reason) noexcept -> void {
   m_interface->CloseConnection(p_conn, p_reason, "Disconnected", false);
   std::scoped_lock lock{ m_client_mutex };
   m_clients.erase(p_conn);
 }
-auto Server::bind_packet_handler(
-    packet_type_t p_packet_type,
-    packet_handler_func_t&& packet_handler_func) noexcept -> bool {
-  if (m_packet_handlers.contains(p_packet_type)) {
-    KB_LOG_ERROR("Failed to bind packet handler for packet type: {}. It is already bound!", p_packet_type);
-    return false;
-  }
 
-  m_packet_handlers[p_packet_type] = packet_handler_func;
-  KB_LOG_DEBUG("Successfully bound packet handler for packet: {}", p_packet_type);
-  return true;
-}
-
-auto Server::network_loop() noexcept -> void {
+auto UdpServer::network_loop() noexcept -> void {
   while (m_is_running.load()) {
     poll();
     std::this_thread::sleep_for(std::chrono::milliseconds(k_default_poll_timeout));
   }
 }
 
-auto Server::connection_status_changed_callback(
+auto UdpServer::connection_status_changed_callback(
     SteamNetConnectionStatusChangedCallback_t *p_info) noexcept -> void {
   if (!s_instance) {
-    KB_LOG_ERROR("Failed to call connection status changed callback because Server instance is not set");
+    KB_LOG_ERROR("[UdpServer] Failed to call connection status changed callback because UdpServer instance is not set");
     return;
   }
 
   s_instance->on_connection_status_changed(p_info);
 }
 
-auto Server::on_connection_status_changed(
+auto UdpServer::on_connection_status_changed(
     const SteamNetConnectionStatusChangedCallback_t *p_info) noexcept -> void {
   switch (p_info->m_info.m_eState) {
     case k_ESteamNetworkingConnectionState_None:
@@ -220,13 +213,13 @@ auto Server::on_connection_status_changed(
       const auto conn = p_info->m_hConn;
       if (m_interface->AcceptConnection(conn) != k_EResultOK) {
         m_interface->CloseConnection(conn, 0, nullptr, false);
-        KB_LOG_WARN("Failed to accept connection '{}' (it was already closed?)", conn);
+        KB_LOG_WARN("[UdpServer] Failed to accept connection '{}' (it was already closed?)", conn);
         break;
       }
 
       if (!m_interface->SetConnectionPollGroup(conn, m_poll_group)) {
         m_interface->CloseConnection(conn, 0, nullptr, false);
-        KB_LOG_WARN("Failed to set connection poll group for connection: {}", conn);
+        KB_LOG_WARN("[UdpServer] Failed to set connection poll group for connection: {}", conn);
         break;
       }
 
@@ -251,38 +244,7 @@ auto Server::on_connection_status_changed(
   }
 }
 
-auto Server::handle_packet(const HSteamNetConnection p_conn, const void* p_data,
-                           const size_t p_len) noexcept -> bool {
-  try {
-    const msgpack::object_handle object_handle = msgpack::unpack(static_cast<const char*>(p_data), p_len);
-    const msgpack::object object = object_handle.get();
-
-    if (object.type != msgpack::type::ARRAY || object.via.array.size != 2) {
-      KB_LOG_ERROR("Invalid packet type");
-      return false;
-    }
-
-    const auto packet_type = object.via.array.ptr[0].as<packet_type_t>();
-    const msgpack::object payload = object.via.array.ptr[1].as<msgpack::object>();
-
-    if (const auto packet_handler_func = m_packet_handlers.find(packet_type);
-        packet_handler_func != m_packet_handlers.end()) {
-      KB_LOG_DEBUG("Handling packet type: {}", packet_type);
-      packet_handler_func->second(p_conn, payload);
-    } else {
-      KB_LOG_ERROR("Received valid packet but failed to retrieve any packet handler");
-      return false;
-    }
-
-    return true;
-  } catch (const std::exception& e) {
-    KB_LOG_ERROR("Failed to handle packet with msgpack: {}", e.what());
-    return false;
-  }
-}
-
-
-auto Server::on_fatal_message(const char* p_msg) noexcept -> void {
+auto UdpServer::on_fatal_message(const char* p_msg) noexcept -> void {
   if (p_msg) {
     KB_LOG_ERROR(p_msg);
   }

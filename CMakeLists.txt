@@ -49,31 +49,48 @@ add_library(kb-networking
         src/kb/kb_core.cpp
         include/kb/core/logger.hpp
         src/kb/kb_core.cpp
-        src/kb/net/server.hpp
+        src/kb/net/udp/server/udp_server.hpp
         src/kb/types.h
         include/kb/net/kb_server.h
-        src/kb/net/kb_server.cpp
+        src/kb/net/udp/kb_server.cpp
         include/kb/net/kb_client_info.h
-        src/kb/net/server.cpp
+        src/kb/net/udp/server/udp_server.cpp
         src/kb/kb_networking.cpp
         include/kb/async/awaitable.hpp
-        src/kb/net/client.hpp
-        src/kb/net/packet.hpp
-        src/kb/net/client.cpp
+        src/kb/net/udp/client/udp_client.hpp
+        src/kb/net/udp/packet.hpp
+        src/kb/net/udp/client/udp_client.cpp
         src/kb/net/network_utils.h
         src/kb/net/network_utils.cpp
+        include/kb/net/kb_client.h
+        include/kb/net/kb_network_types.h
+        src/kb/net/udp/serde.hpp
+        src/kb/net/udp/serde.hpp
+        src/kb/net/network_types.h
+        src/kb/core/owning_buffer.hpp
+        src/kb/net/udp/server/udp_packet_server.hpp
+        src/kb/net/udp/client/udp_packet_client.hpp
+        src/kb/net/udp/client/async_udp_packet_client.h
+
+        src/kb/net/serde/base_packet_serializer.h
+        src/kb/net/serde/binary_packet_serializer.h
+        src/kb/net/serde/msgpack_packet_serializer.h
+        src/kb/net/network_types.cpp
+        src/kb/net/udp/udp.hpp
 )
 
+# Include dirs
 target_include_directories(kb-networking PUBLIC include)
 target_include_directories(kb-networking PRIVATE src)
+target_include_directories(kb-networking PUBLIC ${LIBCORO_INCLUDE_DIRS})
+
 target_compile_features   (kb-networking PRIVATE cxx_std_20)
 
+# Link libs
 target_link_libraries(kb-networking PRIVATE GameNetworkingSockets::shared)
 target_link_libraries(kb-networking PRIVATE spdlog::spdlog_header_only)
 target_link_libraries(kb-networking PRIVATE msgpack-cxx)
 target_link_libraries(kb-networking PRIVATE fmt::fmt)
-#target_link_libraries(kb-networking PUBLIC libcoro)
-target_include_directories(kb-networking PUBLIC ${LIBCORO_INCLUDE_DIRS})
 target_link_libraries(kb-networking PUBLIC ${LIBCORO_LIBRARIES})
 
 if (BUILD_SHARED_LIBS)
@@ -81,6 +98,12 @@ if (BUILD_SHARED_LIBS)
     target_compile_definitions(kb-networking PRIVATE KB_NETWORKING_BUILD)
     target_compile_definitions(kb-networking PUBLIC  KB_NETWORKING_SHARED)
 endif()
+
+# Define KB_DEBUG or KB_RELEASE macro
+target_compile_definitions(kb-networking PRIVATE
+    $<$<CONFIG:Debug>:KB_DEBUG>
+    $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:KB_RELEASE>
+)
 
 set_target_properties(kb-networking
         PROPERTIES
@@ -92,5 +115,4 @@ if (KB_NETWORKING_BUILD_TESTS)
     add_subdirectory(tests)
 endif()
 
-
-# TODO: copy vcpkg.json from root into vcpkg-overlays/kbnetworking/
+# TODO: copy_steam_to_ip_address vcpkg.json from root into vcpkg-overlays/kbnetworking/

@@ -1,6 +1,8 @@
-#include "kb/net/network_utils.h"
+#include "network_utils.h"
 
 #include "kb/kb_networking_cpp.hpp"
+#include <steam/steamnetworkingtypes.h>
+#include <steam/isteamnetworkingutils.h>
 
 namespace kb::net::utils {
 
@@ -9,7 +11,7 @@ auto is_valid_ip_address(std::string_view p_ip_address) noexcept -> bool {
     return false;
   }
 
-  SteamNetworkingIPAddr address;
+  SteamNetworkingIPAddr address{};
   return address.ParseString(p_ip_address.data());
 }
 

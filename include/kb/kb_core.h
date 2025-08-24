@@ -5,6 +5,8 @@
 #ifndef KB_NETWORKING_CPP_KB_CORE_H
 #define KB_NETWORKING_CPP_KB_CORE_H
 
+#include <stdarg.h>
+
 #if defined(KB_NETWORKING_SHARED) && !defined(KB_API)
 #  if defined(_WIN32) && !defined(__MINGW32__)
 #    ifdef KB_API
@@ -24,7 +26,7 @@
 #endif
 
 #ifndef KB_ASSERT
-#  define KB_ASSERT(x, ...) do { if (!(x)) KB_ABORT("Assertion failed (%s): %s", #x, __VA_ARGS__); } while (false)
+#  define KB_ASSERT(x, ...) do { if (!(x)) KB_ABORT("Assertion failed (%s): %s", #x, kb_format_str_internal(__VA_ARGS__)); } while (false)
 #endif
 
 #ifndef KB_UNUSED
@@ -35,7 +37,8 @@
 extern "C" {
 #endif
 
-KB_API void kb_abort(const char *p_file, int p_line, const char *p_fmt, ...);
+KB_API void kb_abort(const char * p_file, int p_line, const char * p_fmt, ...);
+KB_API const char * kb_format_str_internal(const char * p_fmt, ...);
 
 #  ifndef KB_LOG_TRACE
 #    define KB_LOG_TRACE(...) ::kb::core::Logger::get_core_logger()->trace(__VA_ARGS__)
