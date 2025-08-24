@@ -2,13 +2,15 @@
 // Created by happy on 8/20/2025.
 //
 
-#ifndef KB_NETWORKING_ASYNC_UDP_PACKET_CLIENT_H
-#define KB_NETWORKING_ASYNC_UDP_PACKET_CLIENT_H
+#ifndef KB_NETWORKING_ASYNC_UDP_PACKET_CLIENT_HPP
+#define KB_NETWORKING_ASYNC_UDP_PACKET_CLIENT_HPP
 
 #include "kb/types.h"
 #include "kb/kb_networking_cpp.hpp"
 #include "kb/net/network_types.h"
 #include "kb/net/udp/packet.hpp"
+#include "kb/net/udp/serde.hpp"
+#include "kb/net/udp/client/udp_packet_client.hpp"
 
 #include <msgpack.hpp>
 #include <coro/coro.hpp>
@@ -82,7 +84,7 @@ private:
   auto on_data_received_pre_handler(incoming_view_message_t p_message) noexcept;
 
 private:
-  std::shared_ptr<UdpPacketClient<SerdeT>> m_client;
+  std::shared_ptr<UdpPacketClient<SerdeT>> m_client = nullptr;
 
   // TODO: expose configuration through constructor
   // Reference: https://github.com/jbaldwin/libcoro?tab=readme-ov-file#thread_pool
@@ -101,4 +103,4 @@ private:
 
 #include "kb/net/udp/client/async_udp_packet_client.inl"
 
-#endif  //KB_NETWORKING_ASYNC_UDP_PACKET_CLIENT_H
+#endif  //KB_NETWORKING_ASYNC_UDP_PACKET_CLIENT_HPP

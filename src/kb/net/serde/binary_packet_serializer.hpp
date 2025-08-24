@@ -2,10 +2,10 @@
 // Created by happy on 8/23/2025.
 //
 
-#ifndef KB_NETWORKING_BINARY_PACKET_SERIALIZER_H
-#define KB_NETWORKING_BINARY_PACKET_SERIALIZER_H
+#ifndef KB_NETWORKING_BINARY_PACKET_SERIALIZER_HPP
+#define KB_NETWORKING_BINARY_PACKET_SERIALIZER_HPP
 
-#include "kb/net/serde/base_packet_serializer.h"
+#include "kb/net/serde/base_packet_serializer.hpp"
 
 #include <span>
 
@@ -97,4 +97,4 @@ public:
 
 } // end namespace kb::net
 
-#endif  //KB_NETWORKING_BINARY_PACKET_SERIALIZER_H
+#endif  //KB_NETWORKING_BINARY_PACKET_SERIALIZER_HPP

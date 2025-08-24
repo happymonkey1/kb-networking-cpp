@@ -36,7 +36,7 @@ auto main([[maybe_unused]] int argc, [[maybe_unused]] char ** argv) -> int {
       const auto pong_res = server->send(
         p_conn,
         static_cast<kb::net::packet_type_t>(test_packet_type_t::Pong),
-        pong_data_t{ .packet_id = k_expected_pong_id },
+        pong_data_t{ .packet_id = 2 },
         true
       );
     }
@@ -79,7 +79,7 @@ auto main([[maybe_unused]] int argc, [[maybe_unused]] char ** argv) -> int {
   // Send a `Ping` packet to the server
   const auto send_pack_res = client->send_packet(
     static_cast<kb::net::packet_type_t>(test_packet_type_t::Ping),
-    ping_data_t{ .packet_id = k_expected_ping_id },
+    ping_data_t{ .packet_id = 1 },
     true
   );
 

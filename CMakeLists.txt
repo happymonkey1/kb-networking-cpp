@@ -69,14 +69,14 @@ add_library(kb-networking
         src/kb/core/owning_buffer.hpp
         src/kb/net/udp/server/udp_packet_server.hpp
         src/kb/net/udp/client/udp_packet_client.hpp
-        src/kb/net/udp/client/async_udp_packet_client.h
+        src/kb/net/udp/client/async_udp_packet_client.hpp
 
-        src/kb/net/serde/base_packet_serializer.h
-        src/kb/net/serde/binary_packet_serializer.h
-        src/kb/net/serde/msgpack_packet_serializer.h
+        src/kb/net/serde/base_packet_serializer.hpp
+        src/kb/net/serde/binary_packet_serializer.hpp
+        src/kb/net/serde/msgpack_packet_serializer.hpp
         src/kb/net/network_types.cpp
         src/kb/net/udp/udp.hpp
-        src/kb/core/arena_allocator.h
+        src/kb/core/arena_allocator.hpp
 )
 
 # Include dirs

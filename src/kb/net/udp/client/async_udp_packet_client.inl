@@ -158,6 +158,6 @@ auto AsyncUdpPacketClient<SerdeT>::get_packet_awaiter(packet_type_t p_packet_typ
   return std::move(awaiting);
 }
 
-}
+} // end namespace kb::net
 
 #endif  //KB_NETWORKING_ASYNC_UDP_PACKET_CLIENT_INL
