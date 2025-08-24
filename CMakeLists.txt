@@ -76,6 +76,7 @@ add_library(kb-networking
         src/kb/net/serde/msgpack_packet_serializer.h
         src/kb/net/network_types.cpp
         src/kb/net/udp/udp.hpp
+        src/kb/core/arena_allocator.h
 )
 
 # Include dirs

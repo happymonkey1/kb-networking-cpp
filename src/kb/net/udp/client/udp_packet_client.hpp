@@ -61,13 +61,13 @@ public:
 
 private:
   [[nodiscard]] auto send_packet_internal(const details::internal_packet_t & p_packet, bool p_reliable = true) const noexcept -> bool;
-  auto handle_message(incoming_view_message_t p_message) noexcept -> void;
+  [[nodiscard]] auto handle_message(incoming_view_message_t p_message) noexcept -> bool;
 
 private:
   // Underlying udp client
   UdpClient m_client;
   // Registered packet handlers
-  std::mutex m_handler_mutex;
+  std::mutex m_handler_mutex; // TODO: do we need mutex ?
   std::unordered_map<packet_type_t, packet_handler_func_t> m_handlers;
   // Packet serialization handler
   serializer_t m_serializer{};
