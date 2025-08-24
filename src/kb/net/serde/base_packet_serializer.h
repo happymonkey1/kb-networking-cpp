@@ -27,6 +27,13 @@ struct BasePacketSerializer {
   ) const noexcept -> auto {
     return derived()->deserialize_packet_internal(p_payload, p_payload_size);
   }
+
+  template <typename T>
+  [[nodiscard]] auto payload_as(
+    auto && p_payload
+  ) const noexcept -> auto {
+    return derived()->template payload_as_internal<T>(std::forward<decltype(p_payload)>(p_payload));
+  }
 protected:
   [[nodiscard]] static auto write_internal_packet_header(
     u8 * p_buffer,

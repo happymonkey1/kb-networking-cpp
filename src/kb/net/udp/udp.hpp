@@ -11,26 +11,32 @@
 
 namespace kb::net::udp {
 
+// Create a packet handling server with underlying binary serialization
 inline auto create_binary_server() noexcept -> std::shared_ptr<UdpPacketServer<serialization_type_t::bin>> {
   return UdpPacketServer<serialization_type_t::bin>::create();
 }
 
+// Create a packet handling server with underlying msgpack serialization
 inline auto create_msgpack_server() noexcept -> std::shared_ptr<UdpPacketServer<serialization_type_t::msgpack>> {
   return UdpPacketServer<serialization_type_t::msgpack>::create();
 }
 
+// Create a packet handling client with underlying binary serialization
 inline auto create_binary_client() noexcept -> std::shared_ptr<UdpPacketClient<serialization_type_t::bin>> {
   return UdpPacketClient<serialization_type_t::bin>::create();
 }
 
+// Create a packet handling client with underlying msgpack serialization
 inline auto create_msgpack_client() noexcept -> std::shared_ptr<UdpPacketClient<serialization_type_t::msgpack>> {
   return UdpPacketClient<serialization_type_t::msgpack>::create();
 }
 
+// Create an async packet handling client with underlying binary serialization
 inline auto create_async_binary_client() noexcept -> std::shared_ptr<AsyncUdpPacketClient<serialization_type_t::bin>> {
   return AsyncUdpPacketClient<serialization_type_t::bin>::create();
 }
 
+// Create an async packet handling client with underlying msgpack serialization
 inline auto create_async_msgpack_client() noexcept -> std::shared_ptr<AsyncUdpPacketClient<serialization_type_t::msgpack>> {
   return AsyncUdpPacketClient<serialization_type_t::msgpack>::create();
 }

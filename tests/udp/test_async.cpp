@@ -2,8 +2,8 @@
 #include "kb/kb_networking_cpp.hpp"
 
 enum class test_packet_type_t {
-  Ping = 0,
-  Pong = 1,
+  Ping = 1000,
+  Pong = 1001,
 };
 
 struct ping_data_t {

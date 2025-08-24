@@ -40,6 +40,26 @@ public:
     );
   }
 
+  template <typename T>
+  [[nodiscard]] auto payload_as_internal(
+    payload_t p_payload
+  ) const noexcept -> option<T> {
+    static_assert(std::is_trivially_copyable_v<typename std::remove_cv<typename std::remove_reference<decltype(p_payload)>::type>::type>);
+
+    if (p_payload.size() != sizeof(T)) {
+      KB_LOG_ERROR(
+        "[BinaryPacketSerializer]: Can not deserialize into type with different size: Expected %d, found %d",
+        sizeof(T),
+        p_payload.size()
+      );
+      return std::nullopt;
+    }
+
+    T temp{};
+    std::memcpy(&temp, p_payload.data(), sizeof(T));
+    return temp;
+  }
+
   [[nodiscard]] static auto serialize(
     const kb_connection_t   p_conn,
     const void            * p_data,

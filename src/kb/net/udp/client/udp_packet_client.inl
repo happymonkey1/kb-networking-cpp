@@ -49,7 +49,7 @@ auto UdpPacketClient<SerdeT>::send_packet(
 }
 
 template <serialization_type_t SerdeT>
-auto UdpPacketClient<SerdeT>::handle_message(incoming_view_message_t p_message) noexcept -> void {
+auto UdpPacketClient<SerdeT>::handle_message(incoming_view_message_t p_message) noexcept -> bool {
   auto maybe_internal_packet_header = details::unpack_internal_packet_header(
     p_message.m_buffer.data(),
     p_message.m_buffer.size()
@@ -57,11 +57,25 @@ auto UdpPacketClient<SerdeT>::handle_message(incoming_view_message_t p_message) 
 
   if (!maybe_internal_packet_header) {
     KB_LOG_WARN("UdpClient received malformed packet from conn: {}", p_message.m_conn);
-    return;
+    return false;
   }
 
   auto header = std::move(*maybe_internal_packet_header);
+  const auto serde_type = header.m_serde_type;
+  if (serde_type != SerdeT) {
+    KB_LOG_WARN("[UdpPacketClient] Found valid packet header with incorrect serde type: {}", static_cast<u32>(serde_type));
+    return false;
+  }
   const auto packet_type = header.m_packet_type;
+
+  // Try to invoke a pre handler data received callback
+  // Early return if the callback successfully handled the packet
+  if (m_callbacks.m_on_data_received_pre_handler_callback) {
+    const auto pre_handler_callback_res = m_callbacks.m_on_data_received_pre_handler_callback(p_message);
+    if (pre_handler_callback_res) {
+      return true;
+    }
+  }
 
   typename std::unordered_map<packet_type_t , packet_handler_func_t>::iterator handler_it;
   {
@@ -72,7 +86,7 @@ auto UdpPacketClient<SerdeT>::handle_message(incoming_view_message_t p_message) 
         "[UdpPacketClient] Found valid packet header but could not find handler for packet type: {}",
         static_cast<u32>(packet_type)
       );
-      return;
+      return false;
     }
   }
 
@@ -84,12 +98,14 @@ auto UdpPacketClient<SerdeT>::handle_message(incoming_view_message_t p_message) 
     payload_size
   );
   if (!maybe_payload) {
-    return;
+    return false;
   }
 
   // Invoke the packet handler we located earlier with the deserialized maybe_payload
   auto & payload = *maybe_payload;
   handler_it->second(payload);
+
+  return true;
 }
 
 } // end namespace kb::net

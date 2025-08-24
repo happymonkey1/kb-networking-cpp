@@ -83,6 +83,23 @@ public:
 
   }
 
+  template <typename T>
+  [[nodiscard]] auto payload_as_internal(
+    payload_t p_payload
+  ) const noexcept -> option<T> {
+
+    T temp{};
+    try {
+      auto object = p_payload.get();
+      object.convert(temp);
+    } catch (std::exception& err) {
+      KB_LOG_ERROR("[MsgpackPacketSerializer]: Failed to deserialize payload data: {}", err.what());
+      return std::nullopt;
+    }
+
+    return temp;
+  }
+
 };
 
 } // end namespace kb::net

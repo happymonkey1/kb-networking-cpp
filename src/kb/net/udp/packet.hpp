@@ -26,6 +26,12 @@ constexpr char k_magic_bytes[3] = {
 
 namespace details {
 
+// TODO: consider optimizing to 4 bytes
+//       TWO bytes header: 'K' 'B'
+//       TWO bytes for serde and packet type
+//         4 bits for serialization type (16 possible serde types)
+//         12 bits for packet type (4096 possible packets)
+//       packet_type_t can be changed to uint16_t
 struct internal_packet_header_t {
   // Kablunk magic header
   u8                    m_magic_header[sizeof(k_magic_bytes)] = {
