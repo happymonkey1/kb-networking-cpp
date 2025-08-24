@@ -2,8 +2,8 @@
 // Created by happy on 8/23/2025.
 //
 
-#ifndef KB_NETWORKING_BASE_PACKET_SERIALIZER_H
-#define KB_NETWORKING_BASE_PACKET_SERIALIZER_H
+#ifndef KB_NETWORKING_BASE_PACKET_SERIALIZER_HPP
+#define KB_NETWORKING_BASE_PACKET_SERIALIZER_HPP
 
 #include "kb/net/network_types.h"
 #include "kb/net/udp/packet.hpp"
@@ -72,4 +72,4 @@ private:
 
 }
 
-#endif  //KB_NETWORKING_BASE_PACKET_SERIALIZER_H
+#endif  //KB_NETWORKING_BASE_PACKET_SERIALIZER_HPP

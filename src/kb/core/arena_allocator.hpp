@@ -2,8 +2,8 @@
 // Created by happy on 8/24/2025.
 //
 
-#ifndef KB_NETWORKING_ARENA_ALLOCATOR_H
-#define KB_NETWORKING_ARENA_ALLOCATOR_H
+#ifndef KB_NETWORKING_ARENA_ALLOCATOR_HPP
+#define KB_NETWORKING_ARENA_ALLOCATOR_HPP
 
 #include "kb/types.h"
 
@@ -121,4 +121,4 @@ class Arena {
 
 } // end namespace kb::core
 
-#endif  //KB_NETWORKING_ARENA_ALLOCATOR_H
+#endif  //KB_NETWORKING_ARENA_ALLOCATOR_HPP

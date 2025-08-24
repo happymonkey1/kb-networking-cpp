@@ -7,9 +7,9 @@
 #ifndef KB_NETWORKING_SERDE_HPP
 #define KB_NETWORKING_SERDE_HPP
 
-#include "kb/net/serde/base_packet_serializer.h"
-#include "kb/net/serde/binary_packet_serializer.h"
-#include "kb/net/serde/msgpack_packet_serializer.h"
+#include "kb/net/serde/base_packet_serializer.hpp"
+#include "kb/net/serde/binary_packet_serializer.hpp"
+#include "kb/net/serde/msgpack_packet_serializer.hpp"
 
 #include <msgpack.hpp>
 

@@ -100,13 +100,13 @@ function(kbnetworking_test_and_build source)
     install(TARGETS ${TEST_TARGET} RUNTIME)
     target_include_directories(${TEST_TARGET} PUBLIC ${CMAKE_SOURCE_DIR}/include)
     target_include_directories(${TEST_TARGET} PRIVATE ${CMAKE_SOURCE_DIR}/src) # TODO: we shouldn't be including this
-    target_link_libraries(${TEST_TARGET} PRIVATE GameNetworkingSockets::shared)
-    target_link_libraries(${TEST_TARGET} PRIVATE spdlog::spdlog_header_only)
-    target_link_libraries(${TEST_TARGET} PRIVATE msgpack-cxx)
+    #target_link_libraries(${TEST_TARGET} PRIVATE GameNetworkingSockets::shared)
+    #target_link_libraries(${TEST_TARGET} PRIVATE spdlog::spdlog_header_only)
+    #target_link_libraries(${TEST_TARGET} PRIVATE msgpack-cxx)
     target_link_libraries(${TEST_TARGET} PRIVATE kb-networking)
     #target_link_libraries(${TEST_TARGET} PUBLIC libcoro)
     target_include_directories(${TEST_TARGET} PUBLIC ${LIBCORO_INCLUDE_DIRS})
-    target_link_libraries(${TEST_TARGET} PUBLIC ${LIBCORO_LIBRARIES})
+    #target_link_libraries(${TEST_TARGET} PUBLIC ${LIBCORO_LIBRARIES})
 
     add_test(
             NAME ${TEST_TARGET}

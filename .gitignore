@@ -8,3 +8,4 @@ CMakeUserPresets.json
 /**/CMakeCache.txt
 /Testing
 /vcpkg_installed
+/debug-build

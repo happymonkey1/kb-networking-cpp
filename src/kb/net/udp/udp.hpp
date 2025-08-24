@@ -5,9 +5,9 @@
 #ifndef KB_NETWORKING_UDP_HPP
 #define KB_NETWORKING_UDP_HPP
 
-#include "kb/net/udp/server/udp_packet_server.hpp"
+#include "kb/net/udp/client/async_udp_packet_client.hpp"
 #include "kb/net/udp/client/udp_packet_client.hpp"
-#include "kb/net/udp/client/async_udp_packet_client.h"
+#include "kb/net/udp/server/udp_packet_server.hpp"
 
 namespace kb::net::udp {
 
