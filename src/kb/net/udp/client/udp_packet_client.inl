@@ -68,6 +68,15 @@ auto UdpPacketClient<SerdeT>::handle_message(incoming_view_message_t p_message) 
   }
   const auto packet_type = header.m_packet_type;
 
+  // Try to invoke a pre handler data received callback
+  // Early return if the callback successfully handled the packet
+  if (m_callbacks.m_on_data_received_pre_handler_callback) {
+    const auto pre_handler_callback_res = m_callbacks.m_on_data_received_pre_handler_callback(p_message);
+    if (pre_handler_callback_res) {
+      return true;
+    }
+  }
+
   typename std::unordered_map<packet_type_t , packet_handler_func_t>::iterator handler_it;
   {
     std::scoped_lock { m_handler_mutex };

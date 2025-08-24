@@ -24,6 +24,8 @@ public:
   using payload_t = serde_traits::payload_t;
   // Packet handler callback function type
   using packet_handler_func_t = std::function<void(const payload_t & p_payload)>;
+  // On data received callback function type
+  using on_data_received_callback_t = std::function<bool(incoming_view_message_t p_message)>;
 public:
 
   [[nodiscard]] static auto create() -> std::shared_ptr<UdpPacketClient> {
@@ -33,7 +35,7 @@ public:
     client->m_client.set_on_data_callback(
       [weak = client->weak_from_this()](incoming_view_message_t p_message) {
         if (auto self = weak.lock()) {
-          self->handle_message(p_message);
+          KB_UNUSED(self->handle_message(p_message));
         }
       }
     );
@@ -63,12 +65,20 @@ private:
   [[nodiscard]] auto send_packet_internal(const details::internal_packet_t & p_packet, bool p_reliable = true) const noexcept -> bool;
   [[nodiscard]] auto handle_message(incoming_view_message_t p_message) noexcept -> bool;
 
+  auto register_on_data_received_pre_handler_callback(on_data_received_callback_t p_callback) noexcept -> void {
+    m_callbacks.m_on_data_received_pre_handler_callback = p_callback;
+  }
 private:
+  template <serialization_type_t> friend class AsyncUdpPacketClient;
   // Underlying udp client
   UdpClient m_client;
   // Registered packet handlers
   std::mutex m_handler_mutex; // TODO: do we need mutex ?
   std::unordered_map<packet_type_t, packet_handler_func_t> m_handlers;
+  struct callbacks_t {
+    // On data received callback which is invoked prior to packet handling
+    on_data_received_callback_t m_on_data_received_pre_handler_callback = nullptr;
+  } m_callbacks{};
   // Packet serialization handler
   serializer_t m_serializer{};
 };
