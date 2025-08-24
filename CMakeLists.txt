@@ -56,7 +56,6 @@ add_library(kb-networking
         include/kb/net/kb_client_info.h
         src/kb/net/udp/server/udp_server.cpp
         src/kb/kb_networking.cpp
-        include/kb/async/awaitable.hpp
         src/kb/net/udp/client/udp_client.hpp
         src/kb/net/udp/packet.hpp
         src/kb/net/udp/client/udp_client.cpp

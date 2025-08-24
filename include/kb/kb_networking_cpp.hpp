@@ -10,7 +10,6 @@
 #endif
 
 #include "core/logger.hpp"
-#include "async/awaitable.hpp"
 #include "kb_networking.h"
 
 // TODO: these shouldn't be exposed

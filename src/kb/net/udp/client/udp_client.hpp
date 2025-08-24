@@ -5,7 +5,6 @@
 #ifndef KB_NETWORKING_UDP_CLIENT_HPP
 #define KB_NETWORKING_UDP_CLIENT_HPP
 
-#include "kb/async/awaitable.hpp"
 #include "kb/net/network_types.h"
 #include "kb/net/udp/packet.hpp"
 #include "kb/types.h"
