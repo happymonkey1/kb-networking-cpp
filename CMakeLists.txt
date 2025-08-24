@@ -42,41 +42,58 @@ option(BUILD_SHARED_LIBS "build shared libraries" ${BUILD_SHARED_LIBS_DEFAULT})
 option(KB_NETWORKING_BUILD_TESTS "kb-networking: build tests" ${KB_NETWORKING_STANDALONE})
 
 add_library(kb-networking
-        src/kb/core/logger.cpp
+        # include/kb
         include/kb/kb_networking.h
         include/kb/kb_networking_cpp.hpp
         include/kb/kb_core.h
-        src/kb/kb_core.cpp
+
+        # include/kb/core
         include/kb/core/logger.hpp
-        src/kb/kb_core.cpp
-        src/kb/net/udp/server/udp_server.hpp
-        src/kb/types.h
-        include/kb/net/kb_server.h
-        src/kb/net/udp/kb_server.cpp
+
+        # include/kb/net
+        include/kb/net/kb_client.h
         include/kb/net/kb_client_info.h
-        src/kb/net/udp/server/udp_server.cpp
+        include/kb/net/kb_network_types.h
+        include/kb/net/kb_server.h
+
+        # src/kb
+        src/kb/kb_core.cpp
         src/kb/kb_networking.cpp
-        src/kb/net/udp/client/udp_client.hpp
-        src/kb/net/udp/packet.hpp
-        src/kb/net/udp/client/udp_client.cpp
+        src/kb/types.h
+
+        # src/kb/core
+        src/kb/core/arena_allocator.hpp
+        src/kb/core/logger.cpp
+        src/kb/core/owning_buffer.hpp
+
+        # src/kb/net
+        src/kb/net/network_types.h
+        src/kb/net/network_types.cpp
         src/kb/net/network_utils.h
         src/kb/net/network_utils.cpp
-        include/kb/net/kb_client.h
-        include/kb/net/kb_network_types.h
-        src/kb/net/udp/serde.hpp
-        src/kb/net/udp/serde.hpp
-        src/kb/net/network_types.h
-        src/kb/core/owning_buffer.hpp
-        src/kb/net/udp/server/udp_packet_server.hpp
-        src/kb/net/udp/client/udp_packet_client.hpp
-        src/kb/net/udp/client/async_udp_packet_client.hpp
 
+        # src/kb/net/serde
         src/kb/net/serde/base_packet_serializer.hpp
         src/kb/net/serde/binary_packet_serializer.hpp
         src/kb/net/serde/msgpack_packet_serializer.hpp
-        src/kb/net/network_types.cpp
+
+        # src/kb/net/udp
+        src/kb/net/udp/kb_server.cpp
+        src/kb/net/udp/packet.hpp
+        src/kb/net/udp/serde.hpp
+        src/kb/net/udp/serde.hpp
         src/kb/net/udp/udp.hpp
-        src/kb/core/arena_allocator.hpp
+
+        # src/kb/net/udp/client
+        src/kb/net/udp/client/udp_client.hpp
+        src/kb/net/udp/client/udp_client.cpp
+        src/kb/net/udp/client/udp_packet_client.hpp
+        src/kb/net/udp/client/async_udp_packet_client.hpp
+
+        # src/kb/net/udp/server
+        src/kb/net/udp/server/udp_server.cpp
+        src/kb/net/udp/server/udp_server.hpp
+        src/kb/net/udp/server/udp_packet_server.hpp
 )
 
 # Include dirs
