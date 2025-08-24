@@ -22,13 +22,13 @@ macro_rules! kb_log {
             let formatted_str = format!($($arg)*);
 
             // 2. Convert the Rust String to a C-compatible, null-terminated string.
-            //    This will panic if the string contains an internal null byte.
+            //    This will panic if the string contains an reserved null byte.
             let c_msg = std::ffi::CString::new(formatted_str)
                 .expect("CString::new failed: string contained null byte");
 
             // 3. Call the C function within an unsafe block.
             unsafe {
-                // We cast our Rust enum to the bindgen-generated type.
+                // We cast our Rust enum to the bindgen-generated serializer_t.
                 // bindgen will likely represent the C enum as a u32 or similar.
                 let c_level = $level as kb_networking_cpp::bindings::kb_log_level;
 

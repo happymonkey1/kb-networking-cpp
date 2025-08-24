@@ -6,6 +6,7 @@
 #define KB_NETWORKING_CPP_KB_SERVER_H
 
 #include "kb/kb_core.h"
+#include "kb/net/kb_network_types.h"
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -45,13 +46,15 @@ KB_API void kb_server_stop(kb_server_t * p_server);
 KB_API bool kb_server_start_manual(kb_server_t * p_server, uint16_t p_port);
 KB_API void kb_server_poll(kb_server_t * p_server);
 
-KB_API bool kb_server_send(kb_server_t * p_server,
+// Send raw data to a specific client
+KB_API bool kb_server_send_raw(kb_server_t * p_server,
                            kb_conn_t   p_conn,
                            const void * p_data,
                            uint32_t     p_len,
                            bool         p_reliable);
 
-KB_API bool kb_server_broadcast(kb_server_t *  p_server,
+// Send raw data to all clients
+KB_API bool kb_server_broadcast_raw(kb_server_t * p_server,
                                 const void * p_data,
                                 uint32_t     p_len,
                                 bool         p_reliable);

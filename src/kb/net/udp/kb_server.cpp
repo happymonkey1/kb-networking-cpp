@@ -4,12 +4,12 @@
 
 #include "kb/net/kb_server.h"
 #include "kb/core/logger.hpp"
-#include "server.hpp"
+#include "kb/net/udp/server/udp_server.hpp"
 
 #include <mutex>
 
 struct kb_server {
-  kb::net::Server *m_impl = nullptr;
+  kb::net::UdpServer*m_impl = nullptr;
 
   kb_on_data_func_t m_on_data = nullptr;
   kb_on_connect_func_t m_on_connect = nullptr;
@@ -22,7 +22,7 @@ struct kb_server {
 
 KB_API kb_server_t * kb_server_create(void) {
   return new kb_server_t{
-    .m_impl = new kb::net::Server{},
+    .m_impl = new kb::net::UdpServer{},
     .m_on_data = nullptr,
     .m_on_connect = nullptr,
     .m_on_disconnect = nullptr,
@@ -75,23 +75,23 @@ KB_API void kb_server_poll(kb_server_t * p_server) {
   p_server->m_impl->poll();
 }
 
-KB_API bool kb_server_send(kb_server_t * p_server, kb_conn_t p_conn,
+KB_API bool kb_server_send_raw(kb_server_t * p_server, kb_conn_t p_conn,
                            const void * p_data, uint32_t p_len,
                            bool p_reliable) {
   if (!p_server) {
     return false;
   }
 
-  return p_server->m_impl->send_raw(p_conn, p_data, p_len, p_reliable);
+  return p_server->m_impl->send(p_conn, p_data, p_len, p_reliable);
 }
 
-KB_API bool kb_server_broadcast(kb_server_t * p_server, const void* p_data,
+KB_API bool kb_server_broadcast_raw(kb_server_t * p_server, const void* p_data,
                                 uint32_t p_len, bool p_reliable) {
   if (!p_server) {
     return false;
   }
 
-  return p_server->m_impl->broadcast_raw(p_data, p_len, p_reliable);
+  return p_server->m_impl->broadcast(p_data, p_len, p_reliable);
 }
 
 KB_API void kb_server_disconnect(kb_server_t * p_server, kb_conn_t p_conn,
@@ -118,4 +118,3 @@ KB_API uint16_t kb_server_port(const kb_server_t * p_server) {
 
   return p_server->m_impl->port();
 }
-

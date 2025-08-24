@@ -137,7 +137,7 @@ private:
   std::coroutine_handle<> m_handle{};
 };
 
-// Simple coroutine type for void coroutines
+// Simple coroutine serializer_t for void coroutines
 struct task {
   struct promise_type {
     task get_return_object() { return {}; }

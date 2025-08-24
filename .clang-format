@@ -1,6 +1,7 @@
-# Google C/C++ Code Style settings
+# Kablunk C/C++ Code Style settings
 # https://clang.llvm.org/docs/ClangFormatStyleOptions.html
-# Author: Kehan Xue, kehan.xue (at) gmail.com
+# Based on Google C/C++ Code Style settings, Original Author: Kehan Xue, kehan.xue (at) gmail.com
+# Modified by: Sean Browne, happymonkey1 (at) kablunk (dot) com
 
 Language: Cpp
 BasedOnStyle: Google
@@ -42,9 +43,9 @@ BreakBeforeBinaryOperators: None
 BreakBeforeTernaryOperators: true
 BreakConstructorInitializers: BeforeColon
 BreakInheritanceList: BeforeColon
-ColumnLimit: 80
+ColumnLimit: 160
 CompactNamespaces: false
-ContinuationIndentWidth: 4
+ContinuationIndentWidth: 2
 Cpp11BracedListStyle: true
 DerivePointerAlignment: false  # Make sure the * or & align on the left
 EmptyLineBeforeAccessModifier: LogicalBlock

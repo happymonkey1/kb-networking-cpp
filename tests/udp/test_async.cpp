@@ -1,5 +1,5 @@
+#include "../kb_testing.h"
 #include "kb/kb_networking_cpp.hpp"
-#include "kb_testing.h"
 
 enum class test_packet_type_t {
   Ping = 0,
@@ -23,29 +23,30 @@ auto main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) -> int {
   kb::core::Logger::set_core_logger_level(KB_LOG_LEVEL_TRACE);
   KB_LOG_INFO("Initialized kb-networking library");
 
-  auto server = kb::net::Server{};
+  auto server = kb::net::udp::create_msgpack_server();
   KB_LOG_INFO("Created server");
   const kb::u16 port = 12345;
 
   kb::u32 ping_count = 0;
-  const auto bind_ping_res = server.bind_packet_handler(
+  const auto bind_ping_res = server->bind_packet_handler(
     static_cast<kb::net::packet_type_t>(test_packet_type_t::Ping),
     [&ping_count, &server](
-      HSteamNetConnection p_conn,
-      const msgpack::object& p_object
+      kb_connection_t p_conn,
+      const msgpack::object_handle& p_object
     ) -> void {
       KB_LOG_INFO("Received ping packet from conn: {}", static_cast<kb::u32>(p_conn));
       ++ping_count;
 
+      const auto object = p_object.get();
       ping_data_t ping_data{};
-      p_object.convert(ping_data);
+      object.convert(ping_data);
 
       KB_LOG_INFO("Wait 500 ms before sending pong");
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
       KB_ASSERT_EQ(0, ping_data.packet_id, "Expected packet id 0, found %d", ping_data.packet_id);
 
-      const auto pong_res = server.send(
+      const auto pong_res = server->send(
         p_conn,
         static_cast<kb::net::packet_type_t>(test_packet_type_t::Pong),
         pong_data_t{ .packet_id = 1 },
@@ -55,24 +56,25 @@ auto main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) -> int {
     }
   );
   KB_ASSERT_TRUE(bind_ping_res, "Failed to bind ping packet handler to server");
-  const auto start_async_res = server.start_async(port);
+  const auto start_async_res = server->start(port);
   KB_ASSERT_TRUE(start_async_res, "Failed to start async server");
 
-  auto client = kb::net::Client{};
+  auto client = kb::net::udp::create_async_msgpack_client();
   KB_LOG_INFO("Created client");
-  const auto connect_res = coro::sync_wait(client.async_connect("127.0.0.1", port));
+  const auto connect_res = coro::sync_wait(client->connect("127.0.0.1", port));
+  KB_ASSERT_TRUE(client->is_running(), "UdpClient should be running");
   KB_ASSERT_TRUE(connect_res, "Failed to connect to server");
-  KB_LOG_INFO("Client connection status: {}", static_cast<kb::u32>(client.get_connection_status()));
+  KB_LOG_INFO("UdpClient connection status: {}", static_cast<kb::u32>(client->get_connection_status()));
 
   KB_ASSERT_EQ(
-    kb::net::Client::connection_status_t::connected,
-    client.get_connection_status(),
+    kb::net::UdpClient::connection_status_t::connected,
+    client->get_connection_status(),
     "Expected connected status, found: %d",
-    client.get_connection_status()
+    client->get_connection_status()
   );
 
   // Send ping
-  const auto send_pack_res = client.send_packet(
+  const auto send_pack_res = client->send_packet(
     static_cast<kb::net::packet_type_t>(test_packet_type_t::Ping),
     ping_data_t{ .packet_id = 0 },
     true
@@ -82,27 +84,21 @@ auto main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) -> int {
 
   // Waiting for pong response
   KB_LOG_INFO("Waiting for pong response");
-  const auto pong_res = coro::sync_wait(client.async_wait_for_packet(
+  const auto pong_res = coro::sync_wait(client->async_wait_for_packet<pong_data_t>(
     static_cast<kb::net::packet_type_t>(test_packet_type_t::Pong)
   ));
   KB_ASSERT_TRUE(pong_res.has_value(), "Pong response needs a value");
   KB_LOG_INFO("Pong packet received");
 
-  pong_data_t pong_data{};
-  try {
-    pong_res->convert(pong_data);
-  } catch (const std::exception& err) {
-    KB_ASSERT(false, "Failed to convert pong response: %s", err.what());
-    return -1;
-  }
+  const auto pong_data = *pong_res;
 
   KB_ASSERT_EQ(1, pong_data.packet_id, "Expected pong to have packet id 1");
   KB_ASSERT_EQ(1, ping_count, "Expected 1 ping, found: %d", ping_count);
 
   KB_LOG_INFO("Destroying client");
-  client.stop();
+  client->stop();
   KB_LOG_INFO("Destroying server");
-  server.stop();
+  server->stop();
 
   KB_LOG_INFO("Destroying kb-networking library");
   kb_networking_shutdown();
