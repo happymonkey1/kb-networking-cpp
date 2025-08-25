@@ -9,7 +9,6 @@
     "libcoro",
     "msgpack",
     "pkgconf",
-    "spdlog",
-    "kb-std"
+    "spdlog"
   ]
 }

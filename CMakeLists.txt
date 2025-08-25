@@ -14,13 +14,14 @@ find_package(fmt REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(LIBCORO REQUIRED libcoro)
 link_directories(${LIBCORO_LIBRARY_DIRS})
+find_package(kb-std CONFIG REQUIRED)
 
 # TODO: vcpkg
-FetchContent_Declare(
-        kb-std
-        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vendor/kb/kb-std-cpp
-)
-FetchContent_MakeAvailable(kb-std)
+#FetchContent_Declare(
+#        kb-std
+#        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vendor/kb/kb-std-cpp
+#)
+#FetchContent_MakeAvailable(kb-std)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -97,7 +98,11 @@ add_library(kb-networking
 )
 
 # Include dirs
-target_include_directories(kb-networking PUBLIC include)
+target_include_directories(kb-networking
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+)
 target_include_directories(kb-networking PRIVATE src)
 target_include_directories(kb-networking PUBLIC ${LIBCORO_INCLUDE_DIRS})
 target_include_directories(kb-networking PUBLIC ${KB_STD_PUBLIC_HEADERS})
