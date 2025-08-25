@@ -35,11 +35,6 @@ else()
     set(KB_NETWORKING_STANDALONE OFF)
 endif()
 
-set(KB_NETWORKING_PUBLIC_HEADERS
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/kb/kb_networking.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/kb/kb_networking_cpp.hpp
-)
-
 if (MINGW)
     set(BUILD_SHARED_LIBS_DEFAULT OFF)
 else()
@@ -105,7 +100,6 @@ target_include_directories(kb-networking
 )
 target_include_directories(kb-networking PRIVATE src)
 target_include_directories(kb-networking PUBLIC ${LIBCORO_INCLUDE_DIRS})
-target_include_directories(kb-networking PUBLIC ${KB_STD_PUBLIC_HEADERS})
 
 target_compile_features   (kb-networking PRIVATE cxx_std_20)
 
@@ -129,14 +123,45 @@ target_compile_definitions(kb-networking PRIVATE
     $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:KB_RELEASE>
 )
 
-set_target_properties(kb-networking
-        PROPERTIES
-        PUBLIC_HEADER "${KB_NETWORKING_PUBLIC_HEADERS}")
-
 if (KB_NETWORKING_BUILD_TESTS)
     enable_testing()
     include(CTest)
     add_subdirectory(tests)
 endif()
+
+# CMake install
+if (KB_NETWORKING_INSTALL)
+    set(KB_NETWORKING_TARGETS_CONFIG_FILE "kb-networkingConfigTargets.cmake")
+    set(KB_NETWORKING_CONFIG_IN "${CMAKE_CURRENT_LIST_DIR}/cmake/kb-networking-config.cmake.in")
+    set(KB_NETWORKING_CONFIG_OUT "${CMAKE_CURRENT_BINARY_DIR}/kb-networking-config.cmake")
+    set(KB_NETWORKING_EXPORT_DEST_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/kb-networking")
+    set(KB_NETWORKING_VERSION_CONFIG_FILE "${CMAKE_CURRENT_BINARY_DIR}/kb-networkingConfigVersion.cmake")
+
+    install(TARGETS kb-networking
+            EXPORT kb-networking
+            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
+
+    export(TARGETS kb-networking NAMESPACE kb-networking::
+            FILE "${CMAKE_CURRENT_BINARY_DIR}/${KB_NETWORKING_TARGETS_CONFIG_FILE}")
+    install(EXPORT kb-networking
+            DESTINATION ${KB_NETWORKING_EXPORT_DEST_DIR}
+            NAMESPACE kb-networking::
+            FILE ${KB_NETWORKING_TARGETS_CONFIG_FILE})
+    install(DIRECTORY include/
+            DESTINATION include
+            FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
+    )
+
+    include(CMakePackageConfigHelpers)
+    configure_package_config_file("${KB_NETWORKING_CONFIG_IN}" "${KB_NETWORKING_CONFIG_OUT}"
+            INSTALL_DESTINATION ${KB_NETWORKING_EXPORT_DEST_DIR})
+
+    write_basic_package_version_file("${KB_NETWORKING_VERSION_CONFIG_FILE}" COMPATIBILITY SameMajorVersion)
+    install(FILES "${KB_NETWORKING_CONFIG_OUT}" "${KB_NETWORKING_VERSION_CONFIG_FILE}"
+            DESTINATION "${KB_NETWORKING_EXPORT_DEST_DIR}")
+endif ()
 
 # TODO: copy_steam_to_ip_address vcpkg.json from root into vcpkg-overlays/kbnetworking/
