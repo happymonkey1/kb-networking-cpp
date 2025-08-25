@@ -1,5 +1,25 @@
 # kb-networking-cpp
 
+## Setup
+
+Edit the kb-std-cpp submodule to point to the [public read-only mirror](https://github.com/happymonkey1/kb-std-cpp/tree/mainline)
+- Open .gitmodules and replace the submodule url with:
+```
+[submodule "vendor/kb/kb-std-cpp"]
+	path = vendor/kb/kb-std-cpp
+	url = https://github.com/happymonkey1/kb-std-cpp.git
+```
+
+Then run `git submodule sync` from the root directory.
+
+Finally, update the submodule remote with: `git remote set-url origin https://github.com/happymonkey1/kb-std-cpp.git`.
+
+Before building, ensure the following environment variables are exported:
+```bash
+export KB_NETWORKING_ROOT=/PATH/TO/kb-networking-cpp
+export VCPKG_OVERLAY_PORTS=PATH/TO/kb-networking-cpp/vcpkg-overlays
+```
+
 ## Example Usage
 
 ```c++
