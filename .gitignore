@@ -9,3 +9,5 @@ CMakeUserPresets.json
 /Testing
 /vcpkg_installed
 /debug-build
+/vendor/kb/kb-std-cpp/.git
+/**/.not-git

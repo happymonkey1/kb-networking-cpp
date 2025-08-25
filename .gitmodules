@@ -1,0 +1,3 @@
+[submodule "vendor/kb/kb-std-cpp"]
+	path = vendor/kb/kb-std-cpp
+	url = ssh://git@git.kablunk.com:2222/happymonkey1/kb-std-cpp.git

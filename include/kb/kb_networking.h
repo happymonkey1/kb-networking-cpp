@@ -5,7 +5,7 @@
 #ifndef KB_NETWORKING_CPP_KB_NETWORKING_H
 #define KB_NETWORKING_CPP_KB_NETWORKING_H
 
-#include "kb_core.h"
+#include "kb/kb_core.h"
 #include "kb/net/kb_server.h"
 #include "kb/net/kb_client.h"
 

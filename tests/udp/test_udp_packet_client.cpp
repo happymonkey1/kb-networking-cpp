@@ -114,7 +114,7 @@ auto main([[maybe_unused]] int argc, [[maybe_unused]] char** argv) -> int {
     kb::net::UdpClient::connection_status_t::connected,
     client->get_connection_status(),
     "Expected connected status, found: %d",
-    client->get_connection_status()
+    static_cast<kb::u32>(client->get_connection_status())
   );
 
   const auto send_pack_res = client->send_packet(

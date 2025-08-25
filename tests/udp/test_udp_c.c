@@ -11,8 +11,8 @@ int main(int argc, char **argv) {
   const uint16_t port = 11124;
   kb_server_start_manual(server, port);
 
-  KB_ASSERT(server != NULL, "UdpServer is null?");
-  KB_ASSERT(kb_server_is_running(server), "UdpServer should be running");
+  KB_ASSERT_TRUE(server != NULL, "UdpServer is null?");
+  KB_ASSERT_TRUE(kb_server_is_running(server), "UdpServer should be running");
   KB_ASSERT_EQ(kb_server_port(server), port, "Port should be %d", port);
 
   const char * message = "Hello from server!";

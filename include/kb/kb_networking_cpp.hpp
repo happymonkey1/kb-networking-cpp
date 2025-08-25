@@ -9,7 +9,7 @@
 #  error "This header should only be used with C++"
 #endif
 
-#include "core/logger.hpp"
+#include "kb/core/logger.hpp"
 #include "kb_networking.h"
 
 // TODO: these shouldn't be exposed
