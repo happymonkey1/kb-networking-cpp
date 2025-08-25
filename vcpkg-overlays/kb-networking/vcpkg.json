@@ -4,11 +4,10 @@
   "version-string": "0.1.0",
   "description": "Kablunk Networking library using Steam's GameNetworkingSockets",
   "dependencies": [
-    "fmt",
     "gamenetworkingsockets",
     "libcoro",
     "msgpack",
     "pkgconf",
-    "spdlog"
+    "kb-std"
   ]
 }

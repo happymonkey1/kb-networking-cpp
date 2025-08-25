@@ -18,10 +18,6 @@
 #define KB_MAGIC_BYTE_2 0x4C
 #define KB_MAGIC_BYTE_3 0x4B
 
-#ifndef KB_OWNING_BUFFER_INIT_SIZE
-#  define KB_OWNING_BUFFER_INIT_SIZE 8192
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
