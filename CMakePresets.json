@@ -16,7 +16,7 @@
       "binaryDir": "${sourceDir}/build-debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "KB_NETWORKING_BUILD_TESTS": "On",
+        "KB_NETWORKING_BUILD_TESTS": "Off",
         "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
       }
     }

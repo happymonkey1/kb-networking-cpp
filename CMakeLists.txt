@@ -98,7 +98,7 @@ target_include_directories(kb-networking
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
 )
-target_include_directories(kb-networking PRIVATE src)
+target_include_directories(kb-networking PUBLIC src) # TODO: public bad!
 target_include_directories(kb-networking PUBLIC ${LIBCORO_INCLUDE_DIRS})
 
 target_compile_features   (kb-networking PRIVATE cxx_std_20)
@@ -151,6 +151,10 @@ if (KB_NETWORKING_INSTALL)
             NAMESPACE kb-networking::
             FILE ${KB_NETWORKING_TARGETS_CONFIG_FILE})
     install(DIRECTORY include/
+            DESTINATION include
+            FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
+    )
+    install(DIRECTORY src/
             DESTINATION include
             FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
     )

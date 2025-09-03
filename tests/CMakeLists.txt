@@ -98,8 +98,8 @@ function(kbnetworking_test_and_build source)
 
     add_executable(${TEST_TARGET} ${source})
     install(TARGETS ${TEST_TARGET} RUNTIME)
-    target_include_directories(${TEST_TARGET} PUBLIC ${CMAKE_SOURCE_DIR}/include)
-    target_include_directories(${TEST_TARGET} PRIVATE ${CMAKE_SOURCE_DIR}/src) # TODO: we shouldn't be including this
+    target_include_directories(${TEST_TARGET} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_include_directories(${TEST_TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src) # TODO: we shouldn't be including this
     #target_link_libraries(${TEST_TARGET} PRIVATE GameNetworkingSockets::shared)
     #target_link_libraries(${TEST_TARGET} PRIVATE spdlog::spdlog_header_only)
     #target_link_libraries(${TEST_TARGET} PRIVATE msgpack-cxx)
