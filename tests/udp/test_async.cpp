@@ -1,5 +1,8 @@
 #include "../kb_testing.h"
 #include "kb/kb_networking_cpp.hpp"
+#include "kb/net/udp/client/async_udp_packet_client.hpp"
+#include "kb/net/udp/server/udp_server.hpp"
+#include "kb/net/udp/udp.hpp"
 
 enum class test_packet_type_t {
   Ping = 1000,

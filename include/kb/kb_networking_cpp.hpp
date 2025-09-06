@@ -13,6 +13,7 @@
 #include "kb_networking.h"
 
 // TODO: these shouldn't be exposed
+#if 0
 #include "kb/net/udp/client/async_udp_packet_client.hpp"
 #include "kb/net/udp/client/udp_client.hpp"
 #include "kb/net/udp/client/udp_packet_client.hpp"
@@ -21,5 +22,6 @@
 #include "kb/net/udp/server/udp_server.hpp"
 #include "kb/net/udp/udp.hpp"
 #include "kb/types.h"
+#endif
 
 #endif  //KB_NETWORKING_CPP_KB_NETWORKING_CPP_H
